@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alchemist Adventurer - 64x96 Pixel Sprite</title>
+<link rel="icon" href="data:,">
+<style>
+:root{color-scheme:dark}
+body{margin:0;padding:16px;background:#1b1f29;color:#e4e8f0;font:14px/1.45 system-ui,"Segoe UI",sans-serif}
+h1{font-size:19px;margin:0 0 4px}
+h2{font-size:15px;margin:22px 0 8px;color:#9fe9f2}
+h3{font-size:13px;margin:10px 0 6px;color:#c9d1e0;font-weight:600}
+p{margin:0 0 10px;color:#aab3c5}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.cell{background:#262c39;border:1px solid #394154;border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.chk{background-color:#303746;background-image:linear-gradient(45deg,#3a4254 25%,transparent 25%,transparent 75%,#3a4254 75%),linear-gradient(45deg,#3a4254 25%,transparent 25%,transparent 75%,#3a4254 75%);background-size:16px 16px;background-position:0 0,8px 8px;border-radius:4px}
+.x2{width:128px;height:192px}
+.lbl{font-size:12px;color:#c9d1e0}
+.sheet-row{display:flex;flex-wrap:wrap;gap:8px}
+.sheet-row .cell{padding:4px;gap:3px}
+.samples{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+#native-size-example{width:64px;height:96px}
+#equal-display-size-example{width:256px;height:384px}
+@media (max-width:480px){body{padding:10px}.grid{grid-template-columns:repeat(2,1fr)}.x2{width:96px;height:144px}#equal-display-size-example{width:256px;height:384px}}
+</style>
+</head>
+<body>
+<h1>Alchemist Adventurer · 64×96 logical px</h1>
+<p>Canvas 2D, drawn in code. 20 frames: Idle 2 · Run 6 · Attack A (sword) 6 · Attack B (potion throw) 6.</p>
+<section id="animation-preview">
+<h2>Live previews</h2>
+<div class="grid">
+<div class="cell"><div class="chk"><canvas id="idle-preview" class="x2" width="64" height="96" data-animation-preview="idle"></canvas></div><span class="lbl">Idle · 2 frames</span></div>
+<div class="cell"><div class="chk"><canvas id="run-preview" class="x2" width="64" height="96" data-animation-preview="run"></canvas></div><span class="lbl">Run · 6 frames</span></div>
+<div class="cell"><div class="chk"><canvas id="attack-a-preview" class="x2" width="64" height="96" data-animation-preview="attack-a"></canvas></div><span class="lbl">Attack A · sword · 6</span></div>
+<div class="cell"><div class="chk"><canvas id="attack-b-preview" class="x2" width="64" height="96" data-animation-preview="attack-b"></canvas></div><span class="lbl">Attack B · potion · 6</span></div>
+</div>
+</section>
+<section id="contact-sheet"><h2>Contact sheet (all 20 frames, 2×)</h2></section>
+<section>
+<h2>Scale samples</h2>
+<div class="samples">
+<div class="cell"><div class="chk"><canvas id="native-size-example" width="64" height="96"></canvas></div><span class="lbl">Native 64×96</span></div>
+<div class="cell"><div class="chk"><canvas id="equal-display-size-example" width="64" height="96"></canvas></div><span class="lbl">Equal height · 384 px (6×)</span></div>
+</div>
+</section>
+<script>
+"use strict";
+
+const W=64,H=96;
+const PAL={ol:'#171222',hL:'#eef3fa',hM:'#bcc6da',hD:'#7a84a4',hX:'#ffffff',
+sk:'#f6d0ae',skD:'#d8977c',br:'#3b2436',am:'#f3a638',amD:'#8a3d14',wh:'#fff6e0',mo:'#b8656a',
+rd:'#d9343c',rdD:'#961f34',rdL:'#f2705a',nv:'#2d3b6b',nvD:'#1d2649',nvL:'#4a5e96',
+co:'#9b5f35',coD:'#693d24',coL:'#c98a52',gl:'#4a3024',glD:'#301e18',lt:'#5a3522',ltL:'#7d4d2f',
+gd:'#e2bf5c',gdD:'#9c7a2c',pn:'#4c4763',pnD:'#34304a',pnL:'#655f82',bt:'#4b2f2b',btD:'#2e1d1c',btL:'#74493b',
+mt:'#b9c7dc',mtL:'#f3f8ff',mtD:'#66748f',cy:'#3fe0f0',cyL:'#b8fbff',cyD:'#1690b4',cyW:'#effeff',
+sl:'#a9c8ec',sw:'#f7fbff'};
+const C={};for(const k in PAL){const v=PAL[k];C[k]=[parseInt(v.slice(1,3),16),parseInt(v.slice(3,5),16),parseInt(v.slice(5,7),16)];}
+let B=null;
+const rnd=Math.round;
+function mix(a,b,t){return [rnd(a[0]+(b[0]-a[0])*t),rnd(a[1]+(b[1]-a[1])*t),rnd(a[2]+(b[2]-a[2])*t)];}
+function px(x,y,c){x=rnd(x);y=rnd(y);if(!c||x<0||y<0||x>=W||y>=H)return;B[y*W+x]=c;}
+function rect(x,y,w,h,c){for(let j=0;j<h;j++)for(let i=0;i<w;i++)px(x+i,y+j,c);}
+function disc(cx,cy,r,c){cx=rnd(cx);cy=rnd(cy);if(r<=0){px(cx,cy,c);return;}const q=r*r+r*0.6;
+ for(let y=-r;y<=r;y++)for(let x=-r;x<=r;x++)if(x*x+y*y<=q)px(cx+x,cy+y,c);}
+function bres(x0,y0,x1,y1){x0=rnd(x0);y0=rnd(y0);x1=rnd(x1);y1=rnd(y1);const o=[];
+ let dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,e=dx+dy;
+ for(;;){o.push([x0,y0]);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx;}if(e2<=dx){e+=dx;y0+=sy;}}return o;}
+function line(a,b,c){for(const p of bres(a[0],a[1],b[0],b[1]))px(p[0],p[1],c);}
+function thick(a,b,r,c){for(const p of bres(a[0],a[1],b[0],b[1]))disc(p[0],p[1],r,c);}
+function limb(a,b,r,d,m){thick(a,b,r,d);if(r>0)thick(a,b,r-1,m);}
+function poly(pts,c){let y0=1e9,y1=-1e9;for(const p of pts){y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);}
+ for(let y=Math.floor(y0);y<=Math.ceil(y1);y++){const yc=y+0.5,xs=[];
+  for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];
+   if((a[1]<=yc&&b[1]>yc)||(b[1]<=yc&&a[1]>yc))xs.push(a[0]+(yc-a[1])/(b[1]-a[1])*(b[0]-a[0]));}
+  xs.sort((p,q)=>p-q);
+  for(let k=0;k+1<xs.length;k+=2)for(let x=Math.ceil(xs[k]-0.5);x<=Math.floor(xs[k+1]-0.5);x++)px(x,y,c);}}
+function tmpl(rows,map,ox,oy){for(let y=0;y<rows.length;y++)for(let x=0;x<rows[y].length;x++){const ch=rows[y][x];if(ch!=='.')px(ox+x,oy+y,C[map[ch]]);}}
+function outline(){const o=B.slice(),nb=[[0,1],[0,-1],[1,0],[-1,0]];
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(B[y*W+x])continue;let n=null;
+  for(const [dx,dy] of nb){const X=x+dx,Y=y+dy;if(X>=0&&Y>=0&&X<W&&Y<H&&B[Y*W+X]){n=B[Y*W+X];break;}}
+  if(n)o[y*W+x]=mix(n,C.ol,0.74);}
+ B=o;}
+const rad=d=>d*Math.PI/180;
+function pt(o,l,a){return [o[0]+Math.sin(rad(a))*l,o[1]+Math.cos(rad(a))*l];}
+function R(p){return [rnd(p[0]),rnd(p[1])];}
+function legJ(hip,a,b){const k=pt(hip,16,a),an=pt(k,16,a-b);return {hip,k,an,s:a-b};}
+function armJ(sh,a,e){const el=pt(sh,10,a),h=pt(el,9,a+e);return {sh,el,h,fa:a+e};}
+
+// Head, 20x20, facing right (3/4). Long bang swept forward over the far cheek (cols 14-16).
+const HEAD=[
+"......hhhhhhh.......",
+"....hhHHHHHHHhh.....",
+"...hHHHHHHHHHHHh....",
+"..hHHHXXXXXHHHHHh...",
+".dhHHHHHHHHHHHHHHh..",
+".dhhHHhHHHHHHHHHHh..",
+"ddhhhhdhhHHHHHHHHHh.",
+"ddhhhdhhShhHHhHHHHh.",
+"ddhhdhSSShSShHHHHhh.",
+"ddhdhsSSSSSSSShHHh..",
+"ddhdssLLLSSSLShHh...",
+"dhdsSSLLLSSSLShHhS..",
+"dhdsSSEoWSSSEShHhS..",
+".dhssSEEESSSEShHhSs.",
+".dhdsSSSSSSSSShHhS..",
+"..dhsSSSSSSSSShhs...",
+"..ddssSSSSSmSShs....",
+"...ddssSSSSSSShd....",
+".....sssSSSSSs......",
+".......sssss........"];
+const HMAP={d:'hD',h:'hM',H:'hL',X:'hX',S:'sk',s:'skD',L:'br',E:'am',o:'amD',W:'wh',m:'mo'};
+function drawLeg(L,far){
+ const pd=far?C.pnD:C.pn,pdd=far?mix(C.pnD,C.ol,.35):C.pnD,bd=far?C.btD:C.bt,bdd=far?mix(C.btD,C.ol,.4):C.btD;
+ const hip=R(L.hip),k=R(L.k),an=R(L.an);
+ limb(hip,k,3,pdd,pd);limb(k,an,2,pdd,pd);
+ if(!far)line([hip[0]+1,hip[1]],[k[0]+1,k[1]-1],C.pnL);
+ const top=R(pt(L.an,-8,L.s)),cuf=R(pt(L.an,-6,L.s));
+ limb(top,an,2,bdd,bd);limb(top,cuf,2,bdd,far?C.bt:C.btL);
+ const fr=Math.max(0,-L.s)*0.9-Math.max(0,L.s)*0.3,toe=R(pt(L.an,6,90-fr));
+ limb(an,toe,2,bdd,bd);
+ if(!far)px(toe[0]-1,toe[1]-1,C.btL);}
+function drawArm(A,far,hold,vial){
+ const cm=far?C.coD:C.co,cd=far?mix(C.coD,C.ol,.4):C.coD,gm=far?C.glD:C.gl,gd=far?mix(C.glD,C.ol,.4):C.glD;
+ const sh=R(A.sh),el=R(A.el),h=R(A.h),wr=R(pt(A.el,5,A.fa)),cf=R(pt(A.el,3,A.fa));
+ limb(sh,el,2,cd,cm);limb(el,wr,2,cd,cm);
+ limb(cf,wr,2,cd,far?C.co:C.coL);
+ if(!far)px(el[0],el[1]-1,C.coL);
+ if(hold)hold();
+ limb(wr,h,2,gd,gm);
+ const f1=R(pt(A.h,2,A.fa)),f2=R(pt(f1,1,A.fa+90));
+ px(f1[0],f1[1],far?C.skD:C.sk);px(f2[0],f2[1],C.skD);
+ if(vial)drawVial(h[0],h[1]-1);}
+function drawVial(x,y){px(x,y-6,C.ltL);px(x,y-5,C.mtL);rect(x-1,y-4,3,3,C.cy);px(x-1,y-4,C.cyW);px(x+1,y-2,C.cyD);px(x,y-2,C.cyD);}
+function drawSword(h,a){const pm=R(pt(h,-3,a)),bs=R(pt(h,2,a)),b0=R(pt(h,3,a)),b1=R(pt(h,12,a)),tip=R(pt(h,15,a));
+ line(pm,h,C.lt);px(pm[0],pm[1],C.gd);
+ line(R(pt(bs,2,a+90)),R(pt(bs,-2,a+90)),C.gd);px(bs[0],bs[1],C.gdD);
+ thick(b0,b1,1,C.mt);line(b0,tip,C.mt);
+ const o1=R(pt([0,0],1,a+90)),o2=R(pt([0,0],-1,a+90));
+ line([b0[0]+o1[0],b0[1]+o1[1]],[b1[0]+o1[0],b1[1]+o1[1]],C.mtL);
+ line([b0[0]+o2[0],b0[1]+o2[1]],[b1[0]+o2[0],b1[1]+o2[1]],C.mtD);
+ px(tip[0],tip[1],C.mtL);}
+
+function drawTorso(S,Hp,p){const [sx,sy]=S,[hx,hy]=Hp,hb=p.hem||[0,0];
+ poly([[sx-6,sy],[sx+7,sy],[hx+7,hy-3],[hx+6,hy+6],[hx-5,hy+6],[hx-6,hy-3]],C.nv);
+ line([sx+4,sy+2],[hx+4,hy-4],C.nvL);line([hx+3,hy],[hx+3,hy+5],C.nvD);
+ poly([[sx-7,sy-1],[sx+3,sy-1],[sx+3,sy+4],[hx+2,hy-3],[hx+2,hy+9],[hx-3,hy+10],[hx-8+hb[0],hy+9+hb[1]],[hx-8,hy-3],[sx-8,sy+4]],C.co);
+ poly([[sx-7,sy-1],[sx-4,sy-1],[hx-5,hy-3],[hx-5+hb[0],hy+9+hb[1]],[hx-8+hb[0],hy+9+hb[1]],[hx-8,hy-3],[sx-8,sy+4]],C.coD);
+ poly([[sx+6,sy+1],[sx+8,sy+3],[hx+8,hy-3],[hx+8,hy+7],[hx+6,hy+8],[hx+6,hy-3]],C.coD);
+ line([sx+2,sy+3],[hx+1,hy-4],C.coL);line([hx+1,hy],[hx+1,hy+8],C.coL);
+ line([hx+1,hy+9],[hx-7+hb[0],hy+9+hb[1]],C.coD);}
+function drawBelt(Hp,p){const [hx,hy]=Hp,bo=p.bot||0;
+ rect(hx-8,hy-4,17,3,C.lt);rect(hx-8,hy-4,17,1,C.ltL);
+ rect(hx+3,hy-4,3,3,C.gd);px(hx+4,hy-3,C.gdD);
+ const cols=[[C.rd,C.rdL],[C.am,C.wh],[C.cy,C.cyW]];
+ [hx-6,hx-2,hx+6].forEach((x,i)=>{const X=x+(i===1?0:bo),y=hy-1;
+  px(X+1,y,C.ltL);px(X+1,y+1,C.mtL);rect(X,y+2,3,3,cols[i][0]);px(X,y+2,cols[i][1]);
+  rect(X,y+4,3,1,mix(cols[i][0],C.ol,.35));});}
+function drawSatchel(S,Hp,p){const [sx,sy]=S,[hx,hy]=Hp,x=hx-14+(p.sw||0),y=hy-3;
+ line([sx+5,sy+1],[hx-7,hy-4],C.lt);line([sx+5,sy+2],[hx-7,hy-3],C.lt);line([sx+5,sy],[hx-8,hy-5],C.ltL);
+ poly([[x,y],[x+8,y],[x+8,y+8],[x+7,y+9],[x+1,y+9],[x,y+8]],C.lt);
+ poly([[x,y],[x+8,y],[x+8,y+4],[x+5,y+5],[x+3,y+5],[x,y+4]],C.ltL);
+ line([x+1,y],[x+6,y],C.coL);px(x+4,y+5,C.gd);px(x+4,y+6,C.gdD);line([x+1,y+8],[x+6,y+8],mix(C.lt,C.ol,.4));}
+function drawScabbard(Hp){const [hx,hy]=Hp,a=[hx+1,hy-3],b=[hx-15,hy+7];
+ limb(a,b,1,C.btD,C.lt);px(b[0],b[1],C.gd);px(b[0]+1,b[1]-1,C.gdD);}
+function drawHilt(Hp){const [hx,hy]=Hp;
+ line([hx+3,hy-5],[hx+7,hy-8],C.lt);line([hx+4,hy-5],[hx+7,hy-7],C.ltL);px(hx+8,hy-9,C.gd);
+ line([hx+1,hy-6],[hx+3,hy-3],C.gd);}
+function drawScarfTails(S,p){const sc=p.sc;
+ for(let t=1;t>=0;t--){let x=S[0]-4,y=S[1]-1;const len=t?11:14,col=t?C.rdD:C.rd,dk=t?mix(C.rdD,C.ol,.3):C.rdD,pts=[];
+  for(let k=0;k<len;k++){const a=sc.d-t*12+Math.sin(k*0.55+sc.ph+t)*sc.w;x+=Math.sin(rad(a));y+=Math.cos(rad(a));pts.push([x,y]);}
+  pts.forEach((q,k)=>disc(q[0],q[1],k<len-4?2:(k<len-1?1:0),dk));
+  pts.forEach((q,k)=>disc(q[0],q[1],k<len-4?1:0,k<3&&!t?C.rdL:col));}}
+function drawScarfWrap(S){const [sx,sy]=S;
+ poly([[sx-5,sy-4],[sx+5,sy-4],[sx+8,sy-1],[sx+7,sy+2],[sx+2,sy+3],[sx-4,sy+2],[sx-6,sy-1]],C.rd);
+ line([sx-4,sy-4],[sx+4,sy-4],C.rdL);line([sx-3,sy],[sx+5,sy],C.rdD);
+ poly([[sx+3,sy+1],[sx+7,sy+1],[sx+6,sy+7],[sx+3,sy+6]],C.rd);
+ line([sx+3,sy+2],[sx+3,sy+5],C.rdL);px(sx+5,sy+6,C.rdD);px(sx+6,sy+5,C.rdD);}
+
+function renderFrame(p){B=new Array(W*H).fill(null);
+ const lN=legJ([1,0],p.nT,p.nB),lF=legJ([-3,-1],p.fT,p.fB),low=Math.max(lN.an[1],lF.an[1]);
+ const hx=28+p.x,hy=rnd(88-low)+p.y,Hp=[hx,hy],S=[hx+p.lean,hy-21+p.ub];
+ const off=L=>({hip:[L.hip[0]+hx,L.hip[1]+hy],k:[L.k[0]+hx,L.k[1]+hy],an:[L.an[0]+hx,L.an[1]+hy],s:L.s});
+ const AN=armJ([S[0]+1,S[1]+2],p.nA,p.nE),AF=armJ([S[0]-4,S[1]+2],p.fA,p.fE),hN=R(AN.h);
+ drawScarfTails(S,p);
+ drawArm(AF,true);
+ if(p.sword!==undefined&&p.swBack)drawSword(hN,p.sword);
+ drawScabbard(Hp);
+ drawLeg(off(lF),true);drawLeg(off(lN),false);
+ drawTorso(S,Hp,p);drawBelt(Hp,p);drawSatchel(S,Hp,p);
+ if(p.sword===undefined)drawHilt(Hp);
+ rect(S[0]-1,S[1]-5,4,4,C.skD);drawScarfWrap(S);
+ tmpl(HEAD,HMAP,S[0]-9+p.hx,S[1]-19+p.hy);
+ drawArm(AN,false,()=>{if(p.sword!==undefined&&!p.swBack)drawSword(hN,p.sword);},p.vial);
+ if(p.solid)p.solid(S,Hp,hN);
+ outline();
+ if(p.fx)p.fx(S,Hp,hN);
+ return B;}
+// ---- effects (drawn after outline, not outlined) ----
+function arcFx(cx,cy,r,from,to,tmax,outer,inner){const span=to-from;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const dx=x-cx,dy=y-cy,d=Math.hypot(dx,dy);if(d>r||d<r-tmax-1)continue;
+  let a=Math.atan2(dy,dx)*180/Math.PI,q=((a-from)%360+540)%360-180,t=q/span;if(t<0||t>1)continue;
+  const th=Math.max(1,rnd(tmax*Math.sin(t*Math.PI*0.5+0.05)));if(d<r-th)continue;
+  px(x,y,d>r-1.2?outer:inner);}}
+function spark(x,y,c,cc){px(x,y,cc||c);px(x-1,y,c);px(x+1,y,c);px(x,y-1,c);px(x,y+1,c);}
+function vialGlow(f){return (S,Hp,h)=>{const x=h[0],y=h[1]-4;
+ if(f===0){px(x+3,y-2,C.cyL);px(x-3,y,C.cy);spark(x+2,y-5,C.cy,C.cyW);}
+ else{px(x-3,y-2,C.cyL);px(x+3,y+1,C.cy);spark(x-1,y-6,C.cy,C.cyW);}};}
+function flyVial(x,y,tilt){px(x+2*tilt,y-2,C.ltL);px(x+tilt,y-1,C.mtL);rect(x-1,y,3,3,C.cy);px(x-1,y,C.cyW);px(x+1,y+2,C.cyD);}
+function slashA(S){arcFx(S[0]+1,S[1]+2,27,-95,-2,6,C.sw,C.sl);}
+function slashB(S){arcFx(S[0]+1,S[1]+2,29,-12,52,3,C.sl,mix(C.sl,C.nv,.35));}
+function burst(cx,cy,st){return ()=>{
+ if(st===0){for(let a=0;a<360;a+=6){const p=R(pt([cx,cy],5,a));px(p[0],p[1],a>90&&a<270?C.cyL:C.cy);}
+  for(let a=22;a<360;a+=45){const p1=R(pt([cx,cy],7,a)),p2=R(pt([cx,cy],9,a));line(p1,p2,C.cy);px(p2[0],p2[1],C.cyL);}
+  rect(cx-1,cy-1,3,3,C.cyL);spark(cx,cy,C.cyL,C.cyW);px(cx-3,cy+2,C.cyD);px(cx+2,cy-3,C.cyD);px(cx+3,cy+3,C.mtL);px(cx-4,cy-3,C.mtL);}
+ else{for(let a=0;a<360;a+=15){const p=R(pt([cx,cy],7,a));px(p[0],p[1],C.cyD);}
+  for(let a=45;a<360;a+=90){const p=R(pt([cx,cy],4,a));px(p[0],p[1],C.cy);}
+  spark(cx-3,cy-10,C.cy,C.cyW);spark(cx+4,cy-8,C.cyD,C.cyL);px(cx,cy-13,C.cyL);px(cx,cy,C.cyL);}};}
+
+// ---- poses ----
+const base={x:0,y:0,lean:0,hx:0,hy:0,ub:0,nT:6,nB:3,fT:-7,fB:2,nA:6,nE:58,fA:-8,fE:12,sc:{d:-18,w:5,ph:0},hem:[0,0],sw:0,bot:0};
+const P=o=>Object.assign({},base,o);
+const IDLE=[P({vial:true,fx:vialGlow(0)}),
+ P({ub:1,nA:5,nE:60,fA:-7,sc:{d:-16,w:5,ph:1.2},vial:true,fx:vialGlow(1)})];
+const RUN=[0,1,2,3,4,5].map(i=>{const a=i/6*Math.PI*2,s=Math.sin(a),c=Math.cos(a);
+ return P({lean:3,hx:1,y:-rnd(2*Math.abs(s)),nT:30*s,nB:16+56*Math.max(0,c),fT:-30*s,fB:16+56*Math.max(0,-c),
+  nA:-38*s+8,nE:78,fA:38*s+8,fE:78,sc:{d:-72+6*s,w:14,ph:i*1.05},hem:[-2-(i%2),-1-(i%3===0?1:0)],
+  sw:rnd(-2*Math.sin(a+0.8)),bot:rnd(Math.sin(a+1.6))});});
+const ATKA=[
+ P({x:-2,nT:12,nB:8,fT:-12,fB:4,nA:25,nE:55,fA:-10,fE:20,sword:140,sc:{d:-25,w:6,ph:0}}),
+ P({x:-3,lean:-2,hx:-1,nT:16,nB:22,fT:-18,fB:8,nA:-120,nE:-30,fA:60,fE:20,sword:-160,swBack:true,sc:{d:-40,w:8,ph:1},hem:[1,0]}),
+ P({x:-3,lean:4,hx:1,nT:30,nB:30,fT:-26,fB:6,nA:95,nE:10,fA:-40,fE:30,sword:60,sc:{d:-80,w:14,ph:2},hem:[-3,-2],sw:-2,bot:1,fx:slashA}),
+ P({x:-2,lean:3,hx:1,nT:28,nB:26,fT:-24,fB:6,nA:35,nE:-15,fA:-30,fE:40,sword:20,sc:{d:-70,w:12,ph:3},hem:[-2,-1],sw:-1,fx:slashB}),
+ P({x:-2,lean:1,nT:16,nB:12,fT:-14,fB:6,nA:20,nE:40,fA:-15,fE:25,sword:90,sc:{d:-45,w:8,ph:4},hem:[-1,0],sw:1}),
+ P({x:-2,nT:12,nB:8,fT:-12,fB:4,nA:15,nE:50,fA:-10,fE:20,sword:125,sc:{d:-30,w:6,ph:5}})];
+const ATKB=[
+ P({nT:10,nB:10,fT:-10,fB:5,nA:10,nE:50,fA:-5,fE:20,vial:true,sc:{d:-20,w:5,ph:0},fx:vialGlow(0)}),
+ P({x:-2,lean:-2,hx:-1,nT:22,nB:20,fT:-18,fB:6,nA:-65,nE:-25,fA:80,fE:10,vial:true,sc:{d:-35,w:8,ph:1},hem:[1,0],fx:vialGlow(1)}),
+ P({x:-1,lean:4,hx:1,nT:30,nB:26,fT:-24,fB:8,nA:105,nE:25,fA:-40,fE:30,sc:{d:-70,w:12,ph:2},hem:[-3,-1],sw:-2,bot:1,
+  solid:(S,Hp,h)=>flyVial(h[0]+4,h[1]-5,1),fx:(S)=>arcFx(S[0]+1,S[1]+2,18,60,-18,3,C.cy,C.cyD)}),
+ P({x:-1,lean:4,hx:1,nT:28,nB:24,fT:-22,fB:8,nA:60,nE:20,fA:-30,fE:35,sc:{d:-65,w:10,ph:3},hem:[-2,-1],sw:-1,
+  solid:()=>flyVial(54,30,0),fx:()=>{px(44,35,C.cyD);px(47,34,C.cy);px(49,33,C.cy);px(51,32,C.cyL);spark(57,27,C.cyD,C.cyL);}}),
+ P({x:-1,lean:2,nT:20,nB:14,fT:-16,fB:6,nA:45,nE:30,fA:-15,fE:25,sc:{d:-45,w:8,ph:4},fx:burst(56,42,0)}),
+ P({nT:12,nB:8,fT:-12,fB:4,nA:20,nE:45,fA:-10,fE:20,sc:{d:-28,w:6,ph:5},fx:burst(56,42,1)})];
+const ANIMS=[{key:'idle',name:'Idle',poses:IDLE,dur:[620,620]},
+ {key:'run',name:'Run',poses:RUN,dur:[95,95,95,95,95,95]},
+ {key:'attack-a',name:'Attack A · sword slash',poses:ATKA,dur:[140,120,70,90,120,420]},
+ {key:'attack-b',name:'Attack B · potion throw',poses:ATKB,dur:[150,160,80,100,120,420]}];
+function toImage(buf){const id=new ImageData(W,H);
+ for(let i=0;i<W*H;i++){const c=buf[i];if(c){id.data[i*4]=c[0];id.data[i*4+1]=c[1];id.data[i*4+2]=c[2];id.data[i*4+3]=255;}}return id;}
+function paint(cv,img){const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,W,H);ctx.putImageData(img,0,0);}
+ANIMS.forEach(a=>a.imgs=a.poses.map(p=>toImage(renderFrame(p))));
+const sheet=document.getElementById('contact-sheet');
+ANIMS.forEach(a=>{const h=document.createElement('h3');h.textContent=a.name+' ('+a.imgs.length+')';sheet.appendChild(h);
+ const row=document.createElement('div');row.className='sheet-row';sheet.appendChild(row);
+ a.imgs.forEach((img,i)=>{const cell=document.createElement('div');cell.className='cell';
+  const chk=document.createElement('div');chk.className='chk';const cv=document.createElement('canvas');
+  cv.width=W;cv.height=H;cv.className='x2';cv.dataset.contactFrame=a.key+':'+i;paint(cv,img);
+  chk.appendChild(cv);cell.appendChild(chk);const l=document.createElement('span');l.className='lbl';l.textContent=a.key+' '+i;
+  cell.appendChild(l);row.appendChild(cell);});});
+paint(document.getElementById('native-size-example'),ANIMS[0].imgs[0]);
+paint(document.getElementById('equal-display-size-example'),ANIMS[0].imgs[0]);
+ANIMS.forEach(a=>{const cv=document.querySelector('[data-animation-preview="'+a.key+'"]');let i=0;
+ const step=()=>{paint(cv,a.imgs[i]);const d=a.dur[i];i=(i+1)%a.imgs.length;setTimeout(step,d);};step();});
+</script>
+</body>
+</html>

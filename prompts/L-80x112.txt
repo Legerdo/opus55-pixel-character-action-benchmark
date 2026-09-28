@@ -1,0 +1,50 @@
+You are an expert game artist and frontend engineer creating a polished modern indie pixel-art game character.
+
+Isolation rules:
+- Your current working directory is your only allowed work area. Read and write only files in this directory. Do not inspect, enumerate, or read any parent, sibling, workspace, or other run directory or prompt.
+- Work only on the character specification in this prompt. Do not compare against another size or result.
+- Do not restore or resume a previous conversation.
+- Deliver one self-contained index.html in the current directory. Any temporary browser profile or screenshot must also remain in this directory. Do not access external services or the internet.
+
+Character:
+A young fantasy alchemist adventurer. Fixed identity features: short silver hair with one long asymmetric bang sweeping to one side; amber eyes; red scarf; dark navy tunic; brown leather short coat; fingerless gloves; belt with three small potion bottles; left-side satchel; dark boots; a short alchemist blade or short sword at the waist. The combat concept uses a cyan glowing potion vial or alchemical magic.
+Full body, slightly right-facing three-quarter pose, readable silhouette. Avoid exaggerated chibi proportions and semi-realistic rendering.
+
+Style:
+Polished modern indie pixel-art game character with strong silhouette, coherent pixel clusters, controlled palette, clean edge stepping, readable material separation, selective highlights, and handcrafted commercial-quality game-sprite intent.
+Build large shapes, then medium pixel clusters, identifying features, and selective detail. Minimize orphan pixels and jagged edges; no random single-pixel noise or excessive dithering. Vary detail density by material and importance. Keep hair, skin, cloth, leather, glass, and metal distinct without many near-duplicate colors. Do not mechanically outline every edge with pure black. Do not let higher resolution turn into digital painting.
+
+Animation: exactly 20 frames total, all at the requested fixed logical frame size. Maintain the same character identity, head/body/leg proportions, and visual mass in every frame. Keep important parts inside the canvas.
+- Idle: 2 frames, only very subtle breathing.
+- Run: 6 distinct frames in a looping run cycle. Make the alternating arm/leg rhythm readable. Give the scarf, coat hem, and satchel mild follow-through.
+- Attack A: 6 one-shot frames for a quick short-sword slash. Show anticipation, strike, and follow-through in order. Keep the blade, arm, and weapon arc clearly separated.
+- Attack B: 6 one-shot frames for a potion/magic cast or vial throw. The throwing or casting hand/arm gesture must read clearly. Include a simple cyan magic/potion effect that does not swallow the character silhouette.
+Secondary motion must not obscure the main action.
+
+Implementation:
+- Use vanilla JavaScript and Canvas 2D in a single HTML file. Draw every pixel-art frame directly in code.
+- No external images, SVG, sprite sheets, fonts, libraries, or network requests. Do not depend on external files.
+- All logical pixel coordinates and dimensions are integers. No subpixel drawing, antialiasing, blur, or shadowBlur. Set Canvas imageSmoothingEnabled=false and CSS image-rendering:pixelated for nearest-neighbor enlargement.
+- Each frame canvas must have intrinsic width and height equal to the requested logical frame size and retain a transparent background.
+- Include live animation previews for Idle, Run, Attack A, and Attack B. Each preview canvas must have data-animation-preview=\"idle\", \"run\", \"attack-a\", or \"attack-b\".
+- Include a contact sheet showing every frame at once in order: Idle 2, Run 6, Attack A 6, Attack B 6. Mark each frame canvas with data-contact-frame=\"idle:0\" and corresponding animation name/index, starting at index 0.
+- Include elements with these IDs: animation-preview, idle-preview, run-preview, attack-a-preview, attack-b-preview, contact-sheet, native-size-example, equal-display-size-example. Both sample canvases must retain the logical frame dimensions. Show the native-size sample at its logical pixel dimensions. Show the equal-display-size sample enlarged with nearest-neighbor scaling to about 384 CSS pixels high.
+- Make the 4 previews, all 20 contact-sheet frames, native-size sample, and equal-height sample easy to find and compare. The HTML page background may be styled, but sprite canvases must be transparent. Keep the layout clear on a narrow viewport too.
+
+Browser check in this session:
+1. Start a temporary HTTP server rooted only at the current directory and bound to 127.0.0.1 on an available port.
+2. Without installing or downloading anything, open it in the installed Python Playwright and Chrome at C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe. Keep the browser profile and screenshot in this directory.
+3. Verify HTTP status 200, no browser JS exception or console error, exactly 4 animation previews, contact-sheet counts 2/6/6/6, intrinsic dimensions of every frame canvas, transparent alpha pixels, and non-empty rendered canvases.
+4. Record browser requests and block any request outside this page on 127.0.0.1. If any external request is attempted, remove its cause. The page must not make external requests.
+5. Save a screenshot of the actual rendered page as .render-check.png in this directory and inspect it. If you find an obvious visual, console, or structure problem, make one focused fix and rerun the browser check and screenshot once. Stop the temporary server and Chrome afterward. Do not install Playwright or packages.
+6. Do not inspect files outside this directory or share this result with another session.
+
+At the end, report the actual file path, animation/frame counts, browser-check results, and whether you made a fix. Do not claim any check that you did not perform.
+
+This session's only task:
+Create the game-ready pixel-art character above at exactly 80 by 112 logical pixels per frame.
+
+Tier priorities:
+This is a roomy detailed action-sprite tier. Prioritize a polished silhouette and smooth action readability that keeps pixel-art identity; improve scarf/coat/satchel follow-through, anticipation and follow-through clarity, material separation, and face/hair/hand/boot readability. Do not spend the resolution on unnecessary micro-detail or painting-like rendering.
+
+Write the result only to ./index.html. Do not create any other logical frame size.

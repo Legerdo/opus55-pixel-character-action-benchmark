@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opus 5.5 Pixel Character Action Benchmark</title>
+<style>
+:root{color-scheme:dark;--bg:#11141c;--panel:#1b202b;--line:#343c4c;--text:#e8edf5;--muted:#a7b0c0;--accent:#78d7d0;--ok:#83dfa8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,"Segoe UI",sans-serif}header.page{padding:22px 24px 16px;border-bottom:1px solid var(--line)}h1{margin:0 0 6px;font-size:clamp(22px,2vw,32px);letter-spacing:.01em}header.page p{margin:0;color:var(--muted)}.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pill{padding:4px 9px;border:1px solid var(--line);border-radius:999px;background:#171b24;color:#d7e0eb;font-size:12px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:16px;align-items:start}.variant{min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}.variant>header{padding:13px 14px 12px;border-bottom:1px solid var(--line)}h2{margin:0;font-size:20px}.size{color:var(--accent);font-weight:650}.stats{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;margin:10px 0;color:var(--muted);font-size:12px}.stats b{color:var(--text);font-weight:600}.status{color:var(--ok)}a{color:#9bd9ff;text-decoration:none}a:hover{text-decoration:underline}.prompt-view{padding:10px 14px;border-bottom:1px solid var(--line);background:#181d27}.prompt-view summary{cursor:pointer;color:var(--accent);font-weight:650}.prompt-view pre{margin:10px 0 0;max-height:520px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#dbe3ee;background:#11141c;padding:12px;border-radius:8px;font:12px/1.5 ui-monospace,Consolas,monospace}.open{display:inline-block;margin-top:5px;font-weight:650}.embed{display:block;width:100%;height:900px;border:0;background:#171a23}footer{padding:0 24px 20px;color:var(--muted);font-size:12px}@media(max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:680px){header.page{padding:18px 14px}.grid{grid-template-columns:1fr;padding:12px}.embed{height:1200px}footer{padding:0 14px 18px}}
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Opus 5.5 Pixel Character Action Benchmark</h1>
+  <p>Three independent Kiro CLI sessions · same character brief · sprite size is the only benchmark variant.</p>
+  <div class="meta"><span class="pill">Model: claude-opus-5.5</span><span class="pill">Effort: high</span><span class="pill">20 frames per variant</span><span class="pill">No automatic winner</span><a class="pill" href="README.md">README</a></div>
+</header>
+<main class="grid">
+  <article class="variant" data-variant="S" data-size="48×64">
+    <header><h2>S <span class="size">48×64</span></h2><div class="stats"><span>Frame set</span><b>Idle 2 · Run 6 · Attack A 6 · Attack B 6</b><span>Logical size</span><b class="status">48×64 px</b></div><a class="open" href="S/index.html">Open S on its own ↗</a></header>
+    <details class="prompt-view"><summary>사용 프롬프트 보기</summary><pre>You are an expert game artist and frontend engineer creating a polished modern indie pixel-art game character.
+
+Isolation rules:
+- Your current working directory is your only allowed work area. Read and write only files in this directory. Do not inspect, enumerate, or read any parent, sibling, workspace, or other run directory or prompt.
+- Work only on the character specification in this prompt. Do not compare against another size or result.
+- Do not restore or resume a previous conversation.
+- Deliver one self-contained index.html in the current directory. Any temporary browser profile or screenshot must also remain in this directory. Do not access external services or the internet.
+
+Character:
+A young fantasy alchemist adventurer. Fixed identity features: short silver hair with one long asymmetric bang sweeping to one side; amber eyes; red scarf; dark navy tunic; brown leather short coat; fingerless gloves; belt with three small potion bottles; left-side satchel; dark boots; a short alchemist blade or short sword at the waist. The combat concept uses a cyan glowing potion vial or alchemical magic.
+Full body, slightly right-facing three-quarter pose, readable silhouette. Avoid exaggerated chibi proportions and semi-realistic rendering.
+
+Style:
+Polished modern indie pixel-art game character with strong silhouette, coherent pixel clusters, controlled palette, clean edge stepping, readable material separation, selective highlights, and handcrafted commercial-quality game-sprite intent.
+Build large shapes, then medium pixel clusters, identifying features, and selective detail. Minimize orphan pixels and jagged edges; no random single-pixel noise or excessive dithering. Vary detail density by material and importance. Keep hair, skin, cloth, leather, glass, and metal distinct without many near-duplicate colors. Do not mechanically outline every edge with pure black. Do not let higher resolution turn into digital painting.
+
+Animation: exactly 20 frames total, all at the requested fixed logical frame size. Maintain the same character identity, head/body/leg proportions, and visual mass in every frame. Keep important parts inside the canvas.
+- Idle: 2 frames, only very subtle breathing.
+- Run: 6 distinct frames in a looping run cycle. Make the alternating arm/leg rhythm readable. Give the scarf, coat hem, and satchel mild follow-through.
+- Attack A: 6 one-shot frames for a quick short-sword slash. Show anticipation, strike, and follow-through in order. Keep the blade, arm, and weapon arc clearly separated.
+- Attack B: 6 one-shot frames for a potion/magic cast or vial throw. The throwing or casting hand/arm gesture must read clearly. Include a simple cyan magic/potion effect that does not swallow the character silhouette.
+Secondary motion must not obscure the main action.
+
+Implementation:
+- Use vanilla JavaScript and Canvas 2D in a single HTML file. Draw every pixel-art frame directly in code.
+- No external images, SVG, sprite sheets, fonts, libraries, or network requests. Do not depend on external files.
+- All logical pixel coordinates and dimensions are integers. No subpixel drawing, antialiasing, blur, or shadowBlur. Set Canvas imageSmoothingEnabled=false and CSS image-rendering:pixelated for nearest-neighbor enlargement.
+- Each frame canvas must have intrinsic width and height equal to the requested logical frame size and retain a transparent background.
+- Include live animation previews for Idle, Run, Attack A, and Attack B. Each preview canvas must have data-animation-preview=\"idle\", \"run\", \"attack-a\", or \"attack-b\".
+- Include a contact sheet showing every frame at once in order: Idle 2, Run 6, Attack A 6, Attack B 6. Mark each frame canvas with data-contact-frame=\"idle:0\" and corresponding animation name/index, starting at index 0.
+- Include elements with these IDs: animation-preview, idle-preview, run-preview, attack-a-preview, attack-b-preview, contact-sheet, native-size-example, equal-display-size-example. Both sample canvases must retain the logical frame dimensions. Show the native-size sample at its logical pixel dimensions. Show the equal-display-size sample enlarged with nearest-neighbor scaling to about 384 CSS pixels high.
+- Make the 4 previews, all 20 contact-sheet frames, native-size sample, and equal-height sample easy to find and compare. The HTML page background may be styled, but sprite canvases must be transparent. Keep the layout clear on a narrow viewport too.
+
+Browser check in this session:
+1. Start a temporary HTTP server rooted only at the current directory and bound to 127.0.0.1 on an available port.
+2. Without installing or downloading anything, open it in the installed Python Playwright and Chrome at C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe. Keep the browser profile and screenshot in this directory.
+3. Verify HTTP status 200, no browser JS exception or console error, exactly 4 animation previews, contact-sheet counts 2/6/6/6, intrinsic dimensions of every frame canvas, transparent alpha pixels, and non-empty rendered canvases.
+4. Record browser requests and block any request outside this page on 127.0.0.1. If any external request is attempted, remove its cause. The page must not make external requests.
+5. Save a screenshot of the actual rendered page as .render-check.png in this directory and inspect it. If you find an obvious visual, console, or structure problem, make one focused fix and rerun the browser check and screenshot once. Stop the temporary server and Chrome afterward. Do not install Playwright or packages.
+6. Do not inspect files outside this directory or share this result with another session.
+
+At the end, report the actual file path, animation/frame counts, browser-check results, and whether you made a fix. Do not claim any check that you did not perform.
+
+This session's only task:
+Create the game-ready pixel-art character above at exactly 48 by 64 logical pixels per frame.
+
+Tier priorities:
+This is a compact action-sprite tier. Prioritize silhouette readability, action clarity, the scarf/hair/potion identity, separation between weapon and arm, and poses that remain readable at 1x. Prefer motion readability and clear clusters over fine detail.
+
+Write the result only to ./index.html. Do not create any other logical frame size.</pre></details>
+    <iframe class="embed" title="S 48 by 64 live animation previews and contact sheet" src="S/index.html" loading="eager"></iframe>
+  </article>
+  <article class="variant" data-variant="M" data-size="64×96">
+    <header><h2>M <span class="size">64×96</span></h2><div class="stats"><span>Frame set</span><b>Idle 2 · Run 6 · Attack A 6 · Attack B 6</b><span>Logical size</span><b class="status">64×96 px</b></div><a class="open" href="M/index.html">Open M on its own ↗</a></header>
+    <details class="prompt-view"><summary>사용 프롬프트 보기</summary><pre>You are an expert game artist and frontend engineer creating a polished modern indie pixel-art game character.
+
+Isolation rules:
+- Your current working directory is your only allowed work area. Read and write only files in this directory. Do not inspect, enumerate, or read any parent, sibling, workspace, or other run directory or prompt.
+- Work only on the character specification in this prompt. Do not compare against another size or result.
+- Do not restore or resume a previous conversation.
+- Deliver one self-contained index.html in the current directory. Any temporary browser profile or screenshot must also remain in this directory. Do not access external services or the internet.
+
+Character:
+A young fantasy alchemist adventurer. Fixed identity features: short silver hair with one long asymmetric bang sweeping to one side; amber eyes; red scarf; dark navy tunic; brown leather short coat; fingerless gloves; belt with three small potion bottles; left-side satchel; dark boots; a short alchemist blade or short sword at the waist. The combat concept uses a cyan glowing potion vial or alchemical magic.
+Full body, slightly right-facing three-quarter pose, readable silhouette. Avoid exaggerated chibi proportions and semi-realistic rendering.
+
+Style:
+Polished modern indie pixel-art game character with strong silhouette, coherent pixel clusters, controlled palette, clean edge stepping, readable material separation, selective highlights, and handcrafted commercial-quality game-sprite intent.
+Build large shapes, then medium pixel clusters, identifying features, and selective detail. Minimize orphan pixels and jagged edges; no random single-pixel noise or excessive dithering. Vary detail density by material and importance. Keep hair, skin, cloth, leather, glass, and metal distinct without many near-duplicate colors. Do not mechanically outline every edge with pure black. Do not let higher resolution turn into digital painting.
+
+Animation: exactly 20 frames total, all at the requested fixed logical frame size. Maintain the same character identity, head/body/leg proportions, and visual mass in every frame. Keep important parts inside the canvas.
+- Idle: 2 frames, only very subtle breathing.
+- Run: 6 distinct frames in a looping run cycle. Make the alternating arm/leg rhythm readable. Give the scarf, coat hem, and satchel mild follow-through.
+- Attack A: 6 one-shot frames for a quick short-sword slash. Show anticipation, strike, and follow-through in order. Keep the blade, arm, and weapon arc clearly separated.
+- Attack B: 6 one-shot frames for a potion/magic cast or vial throw. The throwing or casting hand/arm gesture must read clearly. Include a simple cyan magic/potion effect that does not swallow the character silhouette.
+Secondary motion must not obscure the main action.
+
+Implementation:
+- Use vanilla JavaScript and Canvas 2D in a single HTML file. Draw every pixel-art frame directly in code.
+- No external images, SVG, sprite sheets, fonts, libraries, or network requests. Do not depend on external files.
+- All logical pixel coordinates and dimensions are integers. No subpixel drawing, antialiasing, blur, or shadowBlur. Set Canvas imageSmoothingEnabled=false and CSS image-rendering:pixelated for nearest-neighbor enlargement.
+- Each frame canvas must have intrinsic width and height equal to the requested logical frame size and retain a transparent background.
+- Include live animation previews for Idle, Run, Attack A, and Attack B. Each preview canvas must have data-animation-preview=\"idle\", \"run\", \"attack-a\", or \"attack-b\".
+- Include a contact sheet showing every frame at once in order: Idle 2, Run 6, Attack A 6, Attack B 6. Mark each frame canvas with data-contact-frame=\"idle:0\" and corresponding animation name/index, starting at index 0.
+- Include elements with these IDs: animation-preview, idle-preview, run-preview, attack-a-preview, attack-b-preview, contact-sheet, native-size-example, equal-display-size-example. Both sample canvases must retain the logical frame dimensions. Show the native-size sample at its logical pixel dimensions. Show the equal-display-size sample enlarged with nearest-neighbor scaling to about 384 CSS pixels high.
+- Make the 4 previews, all 20 contact-sheet frames, native-size sample, and equal-height sample easy to find and compare. The HTML page background may be styled, but sprite canvases must be transparent. Keep the layout clear on a narrow viewport too.
+
+Browser check in this session:
+1. Start a temporary HTTP server rooted only at the current directory and bound to 127.0.0.1 on an available port.
+2. Without installing or downloading anything, open it in the installed Python Playwright and Chrome at C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe. Keep the browser profile and screenshot in this directory.
+3. Verify HTTP status 200, no browser JS exception or console error, exactly 4 animation previews, contact-sheet counts 2/6/6/6, intrinsic dimensions of every frame canvas, transparent alpha pixels, and non-empty rendered canvases.
+4. Record browser requests and block any request outside this page on 127.0.0.1. If any external request is attempted, remove its cause. The page must not make external requests.
+5. Save a screenshot of the actual rendered page as .render-check.png in this directory and inspect it. If you find an obvious visual, console, or structure problem, make one focused fix and rerun the browser check and screenshot once. Stop the temporary server and Chrome afterward. Do not install Playwright or packages.
+6. Do not inspect files outside this directory or share this result with another session.
+
+At the end, report the actual file path, animation/frame counts, browser-check results, and whether you made a fix. Do not claim any check that you did not perform.
+
+This session's only task:
+Create the game-ready pixel-art character above at exactly 64 by 96 logical pixels per frame.
+
+Tier priorities:
+This is a balanced action-sprite tier. Prioritize a strong silhouette and action readability; preserve the hair, face, scarf, coat, satchel, and potion belt; make the weapon slash and potion/magic cast legible; separate cloth, leather, and glass. Spend added resolution on useful detail rather than noise.
+
+Write the result only to ./index.html. Do not create any other logical frame size.</pre></details>
+    <iframe class="embed" title="M 64 by 96 live animation previews and contact sheet" src="M/index.html" loading="eager"></iframe>
+  </article>
+  <article class="variant" data-variant="L" data-size="80×112">
+    <header><h2>L <span class="size">80×112</span></h2><div class="stats"><span>Frame set</span><b>Idle 2 · Run 6 · Attack A 6 · Attack B 6</b><span>Logical size</span><b class="status">80×112 px</b></div><a class="open" href="L/index.html">Open L on its own ↗</a></header>
+    <details class="prompt-view"><summary>사용 프롬프트 보기</summary><pre>You are an expert game artist and frontend engineer creating a polished modern indie pixel-art game character.
+
+Isolation rules:
+- Your current working directory is your only allowed work area. Read and write only files in this directory. Do not inspect, enumerate, or read any parent, sibling, workspace, or other run directory or prompt.
+- Work only on the character specification in this prompt. Do not compare against another size or result.
+- Do not restore or resume a previous conversation.
+- Deliver one self-contained index.html in the current directory. Any temporary browser profile or screenshot must also remain in this directory. Do not access external services or the internet.
+
+Character:
+A young fantasy alchemist adventurer. Fixed identity features: short silver hair with one long asymmetric bang sweeping to one side; amber eyes; red scarf; dark navy tunic; brown leather short coat; fingerless gloves; belt with three small potion bottles; left-side satchel; dark boots; a short alchemist blade or short sword at the waist. The combat concept uses a cyan glowing potion vial or alchemical magic.
+Full body, slightly right-facing three-quarter pose, readable silhouette. Avoid exaggerated chibi proportions and semi-realistic rendering.
+
+Style:
+Polished modern indie pixel-art game character with strong silhouette, coherent pixel clusters, controlled palette, clean edge stepping, readable material separation, selective highlights, and handcrafted commercial-quality game-sprite intent.
+Build large shapes, then medium pixel clusters, identifying features, and selective detail. Minimize orphan pixels and jagged edges; no random single-pixel noise or excessive dithering. Vary detail density by material and importance. Keep hair, skin, cloth, leather, glass, and metal distinct without many near-duplicate colors. Do not mechanically outline every edge with pure black. Do not let higher resolution turn into digital painting.
+
+Animation: exactly 20 frames total, all at the requested fixed logical frame size. Maintain the same character identity, head/body/leg proportions, and visual mass in every frame. Keep important parts inside the canvas.
+- Idle: 2 frames, only very subtle breathing.
+- Run: 6 distinct frames in a looping run cycle. Make the alternating arm/leg rhythm readable. Give the scarf, coat hem, and satchel mild follow-through.
+- Attack A: 6 one-shot frames for a quick short-sword slash. Show anticipation, strike, and follow-through in order. Keep the blade, arm, and weapon arc clearly separated.
+- Attack B: 6 one-shot frames for a potion/magic cast or vial throw. The throwing or casting hand/arm gesture must read clearly. Include a simple cyan magic/potion effect that does not swallow the character silhouette.
+Secondary motion must not obscure the main action.
+
+Implementation:
+- Use vanilla JavaScript and Canvas 2D in a single HTML file. Draw every pixel-art frame directly in code.
+- No external images, SVG, sprite sheets, fonts, libraries, or network requests. Do not depend on external files.
+- All logical pixel coordinates and dimensions are integers. No subpixel drawing, antialiasing, blur, or shadowBlur. Set Canvas imageSmoothingEnabled=false and CSS image-rendering:pixelated for nearest-neighbor enlargement.
+- Each frame canvas must have intrinsic width and height equal to the requested logical frame size and retain a transparent background.
+- Include live animation previews for Idle, Run, Attack A, and Attack B. Each preview canvas must have data-animation-preview=\"idle\", \"run\", \"attack-a\", or \"attack-b\".
+- Include a contact sheet showing every frame at once in order: Idle 2, Run 6, Attack A 6, Attack B 6. Mark each frame canvas with data-contact-frame=\"idle:0\" and corresponding animation name/index, starting at index 0.
+- Include elements with these IDs: animation-preview, idle-preview, run-preview, attack-a-preview, attack-b-preview, contact-sheet, native-size-example, equal-display-size-example. Both sample canvases must retain the logical frame dimensions. Show the native-size sample at its logical pixel dimensions. Show the equal-display-size sample enlarged with nearest-neighbor scaling to about 384 CSS pixels high.
+- Make the 4 previews, all 20 contact-sheet frames, native-size sample, and equal-height sample easy to find and compare. The HTML page background may be styled, but sprite canvases must be transparent. Keep the layout clear on a narrow viewport too.
+
+Browser check in this session:
+1. Start a temporary HTTP server rooted only at the current directory and bound to 127.0.0.1 on an available port.
+2. Without installing or downloading anything, open it in the installed Python Playwright and Chrome at C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe. Keep the browser profile and screenshot in this directory.
+3. Verify HTTP status 200, no browser JS exception or console error, exactly 4 animation previews, contact-sheet counts 2/6/6/6, intrinsic dimensions of every frame canvas, transparent alpha pixels, and non-empty rendered canvases.
+4. Record browser requests and block any request outside this page on 127.0.0.1. If any external request is attempted, remove its cause. The page must not make external requests.
+5. Save a screenshot of the actual rendered page as .render-check.png in this directory and inspect it. If you find an obvious visual, console, or structure problem, make one focused fix and rerun the browser check and screenshot once. Stop the temporary server and Chrome afterward. Do not install Playwright or packages.
+6. Do not inspect files outside this directory or share this result with another session.
+
+At the end, report the actual file path, animation/frame counts, browser-check results, and whether you made a fix. Do not claim any check that you did not perform.
+
+This session's only task:
+Create the game-ready pixel-art character above at exactly 80 by 112 logical pixels per frame.
+
+Tier priorities:
+This is a roomy detailed action-sprite tier. Prioritize a polished silhouette and smooth action readability that keeps pixel-art identity; improve scarf/coat/satchel follow-through, anticipation and follow-through clarity, material separation, and face/hair/hand/boot readability. Do not spend the resolution on unnecessary micro-detail or painting-like rendering.
+
+Write the result only to ./index.html. Do not create any other logical frame size.</pre></details>
+    <iframe class="embed" title="L 80 by 112 live animation previews and contact sheet" src="L/index.html" loading="eager"></iframe>
+  </article>
+</main>
+<footer>Each embedded page contains live Idle, Run, Attack A, and Attack B previews, the full contact sheet, a native-size sample, and an equal-height nearest-neighbor sample.</footer>
+<script>
+for(const frame of document.querySelectorAll('iframe.embed')){
+  const fit=()=>{try{const d=frame.contentDocument;if(!d)return;const h=Math.max(d.documentElement.scrollHeight,d.body?.scrollHeight||0);frame.style.height=(h+8)+'px';frame.dataset.loaded='true';}catch{}}
+  frame.addEventListener('load',()=>{fit();requestAnimationFrame(fit);setTimeout(fit,120);try{const d=frame.contentDocument;new ResizeObserver(fit).observe(d.documentElement);}catch{}});
+}
+</script>
+</body>
+</html>

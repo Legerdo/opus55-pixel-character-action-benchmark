@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alchemist Adventurer - 80x112 pixel sprite</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#1c2030;color:#e4e7f0;font:14px/1.45 system-ui,Segoe UI,sans-serif}
+header,main{max-width:1180px;margin:0 auto;padding:10px 16px}
+h1{font-size:20px;margin:10px 0 2px}h2{font-size:16px;margin:22px 0 8px;color:#cfd6ea}h3{font-size:13px;margin:10px 0 6px;color:#aab3cc;font-weight:600}
+p{margin:4px 0;color:#9aa3bb}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.stage{background-color:#3a4260;background-image:linear-gradient(45deg,#343b56 25%,transparent 25%,transparent 75%,#343b56 75%),linear-gradient(45deg,#343b56 25%,transparent 25%,transparent 75%,#343b56 75%);background-size:16px 16px;background-position:0 0,8px 8px;border-radius:4px}
+.previews{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:#262c40;border:1px solid #39425e;border-radius:8px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.card canvas{width:240px;height:336px}
+.strip{display:flex;flex-wrap:wrap;gap:8px}
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:#9aa3bb}
+.strip canvas{width:160px;height:224px}
+.samples{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end}
+#native-size-example{width:80px;height:112px}
+#equal-display-size-example{width:274px;height:384px}
+@media (max-width:560px){.card canvas{width:160px;height:224px}.previews{grid-template-columns:1fr 1fr}.card{padding:6px}.strip canvas{width:160px;height:224px}.strip{justify-content:center}}
+@media (max-width:360px){.previews{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>Alchemist Adventurer</h1>
+<p>Canvas 2D pixel sprite, 80 x 112 logical pixels per frame, 20 frames. Idle 2, Run 6, Attack A (sword) 6, Attack B (vial throw) 6.</p>
+</header>
+<main>
+<section id="animation-preview" aria-label="Live animation previews">
+<h2>Live previews (3x)</h2>
+<div class="previews">
+<div class="card"><div class="stage"><canvas id="idle-preview" data-animation-preview="idle" width="80" height="112" aria-label="Idle animation"></canvas></div><span>Idle - 2 frames</span></div>
+<div class="card"><div class="stage"><canvas id="run-preview" data-animation-preview="run" width="80" height="112" aria-label="Run animation"></canvas></div><span>Run - 6 frames</span></div>
+<div class="card"><div class="stage"><canvas id="attack-a-preview" data-animation-preview="attack-a" width="80" height="112" aria-label="Sword slash animation"></canvas></div><span>Attack A - 6 frames</span></div>
+<div class="card"><div class="stage"><canvas id="attack-b-preview" data-animation-preview="attack-b" width="80" height="112" aria-label="Vial throw animation"></canvas></div><span>Attack B - 6 frames</span></div>
+</div>
+</section>
+<section aria-label="Contact sheet"><h2>Contact sheet (2x, all 20 frames)</h2><div id="contact-sheet"></div></section>
+<section aria-label="Scale samples"><h2>Scale samples</h2>
+<div class="samples">
+<figure><div class="stage"><canvas id="native-size-example" width="80" height="112" aria-label="Native size sample"></canvas></div><figcaption>native 80 x 112</figcaption></figure>
+<figure><div class="stage"><canvas id="equal-display-size-example" width="80" height="112" aria-label="Enlarged sample"></canvas></div><figcaption>nearest-neighbor, 384 px high</figcaption></figure>
+</div></section>
+</main>
+
+<script>
+'use strict';
+const W=80,H=112,rd=Math.round;let X=null;
+const C={sk:'#f3c9a4',sk2:'#d99a7a',skE:'#94564a',
+hr:'#e6e9f3',hr2:'#b3b9ce',hr3:'#858ba4',hrE:'#51566f',hrH:'#ffffff',
+ey:'#f2a22e',ey2:'#9a4c16',eyH:'#fff1c2',lash:'#3b2632',mo:'#b8665a',
+sc:'#d9363f',sc2:'#9c2230',scH:'#f27062',scE:'#5a1222',
+tn:'#2d3860',tn2:'#1f2745',tnH:'#44568c',tnE:'#121830',
+ct:'#95613a',ct2:'#6a4127',ctH:'#c08a56',ctE:'#3a2215',
+gl:'#4b3428',glE:'#1f140e',
+pn:'#40445a',pn2:'#30334a',pnH:'#5a5f7a',pnE:'#191b28',
+bt:'#3f2e34',bt2:'#2c2026',btH:'#654b52',btE:'#140d11',
+bl:'#4a2e1c',mt:'#e4c979',mt2:'#a4863e',
+sa:'#7c7a4a',sa2:'#5a5834',saH:'#a3a066',saE:'#2c2a16',
+st:'#eef3f8',st2:'#a6b1c3',stE:'#48526a',
+cy:'#5ef2ff',cy2:'#22b4d8',cy3:'#0f6488',cyW:'#eaffff',
+pr:'#e0465a',prd:'#8e2334',pg:'#72d65a',pgd:'#3a7d2e',cork:'#d2b27a',bot:'#2a1a14'};
+function R(x,y,w,h,c){X.fillStyle=c;X.fillRect(rd(x),rd(y),rd(w),rd(h));}
+function P(x,y,c){R(x,y,1,1,c);}
+function D(cx,cy,r,c){cx=rd(cx);cy=rd(cy);X.fillStyle=c;const n=Math.floor(r);
+ for(let dy=-n;dy<=n;dy++){const w=Math.floor(Math.sqrt(Math.max(0,r*r+.6*r-dy*dy)));X.fillRect(cx-w,cy+dy,w*2+1,1);}}
+function E(cx,cy,rx,ry,c){cx=rd(cx);cy=rd(cy);X.fillStyle=c;
+ for(let dy=-ry;dy<=ry;dy++){const t=dy/(ry+.5),w=Math.floor(rx*Math.sqrt(1-t*t)+.35);X.fillRect(cx-w,cy+dy,w*2+1,1);}}
+function S(x0,y0,x1,y1,r0,c,r1){if(r1===undefined)r1=r0;const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0),1);
+ for(let i=0;i<=n;i++){const t=i/n;D(x0+(x1-x0)*t,y0+(y1-y0)*t,r0+(r1-r0)*t,c);}}
+function LB(x0,y0,x1,y1,r0,c,e,r1){if(r1===undefined)r1=r0;S(x0,y0,x1,y1,r0,e,r1);S(x0,y0,x1,y1,r0-1,c,r1-1);}
+function L(x0,y0,x1,y1,c){x0=rd(x0);y0=rd(y0);x1=rd(x1);y1=rd(y1);X.fillStyle=c;
+ const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;
+ for(;;){X.fillRect(x0,y0,1,1);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx;}if(e2<=dx){e+=dx;y0+=sy;}}}
+function PG(p,c,o){X.fillStyle=c;let y0=1e9,y1=-1e9;for(const q of p){y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1]);}
+ for(let y=Math.floor(y0);y<Math.ceil(y1);y++){const yc=y+.5,xs=[];
+  for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];if((a[1]<=yc)!==(b[1]<=yc))xs.push(a[0]+(yc-a[1])/(b[1]-a[1])*(b[0]-a[0]));}
+  xs.sort((m,n)=>m-n);X.fillStyle=c;for(let k=0;k+1<xs.length;k+=2){const l=rd(xs[k]),r=rd(xs[k+1]);if(r>l)X.fillRect(l,y,r-l,1);}}
+ if(o)for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];L(a[0],a[1],b[0],b[1],o);}}
+
+// ---------- body parts ----------
+function foot(ax,ay,t,n){const c=n?C.bt:C.bt2;ax=rd(ax);ay=rd(ay);
+ if(!t){PG([[ax-3,ay-3],[ax+2,ay-3],[ax+6,ay],[ax+6,ay+2],[ax-3,ay+2]],c,C.btE);P(ax+2,ay-2,C.btH);P(ax+3,ay-1,C.btH);}
+ else{PG([[ax-3,ay-2],[ax+2,ay-3],[ax+5,ay+2],[ax+3,ay+5],[ax-2,ay+2]],c,C.btE);P(ax+2,ay-1,C.btH);}}
+function leg(x,y,l,n){const kx=x+l[0],ky=y+l[1],ax=x+l[2],ay=y+l[3];
+ LB(x,y,kx,ky,3.2,n?C.pn:C.pn2,C.pnE,2.8);
+ if(n)L(x,y+2,kx,ky-2,C.pnH);
+ const bx=kx+(ax-kx)*.18,by=ky+(ay-ky)*.18;
+ LB(bx,by,ax,ay,3,n?C.bt:C.bt2,C.btE,2.5);
+ if(n)L(bx-1,by+3,ax-1,ay-3,C.btH);
+ LB(bx,by,bx+(ax-bx)*.16,by+(ay-by)*.16,3.3,n?C.btH:C.bt,C.btE);
+ foot(ax,ay,l[4],n);}
+function hand(x,y,ux,uy){D(x,y,2.3,C.glE);D(x,y,1.3,C.gl);
+ const fx=x+ux*2.4,fy=y+uy*2.4;D(fx,fy,1,C.skE);P(fx,fy,C.sk);}
+function arm(sx,sy,a,n){const ex=sx+a[0],ey=sy+a[1],hx=sx+a[2],hy=sy+a[3],c=n?C.ct:C.ct2;
+ LB(sx,sy,ex,ey,3,c,C.ctE,2.6);LB(ex,ey,hx,hy,2.6,c,C.ctE,2.3);
+ if(n)L(sx-1,sy-1,ex-1,ey-1,C.ctH);
+ const d=Math.hypot(hx-ex,hy-ey)||1,ux=(hx-ex)/d,uy=(hy-ey)/d;
+ const wx=hx-ux*3,wy=hy-uy*3;D(wx,wy,2.3,C.glE);D(wx,wy,1.2,C.gl);
+ hand(hx,hy,ux,uy);return[hx,hy,ux,uy];}
+function bottle(x,y,c,cd){R(x-1,y+2,5,3,C.bot);R(x,y+1,3,1,C.bot);R(x,y+5,3,1,C.bot);
+ R(x,y+2,3,3,c);P(x+1,y+1,c);P(x,y+2,'#ffffff');P(x+2,y+4,cd);P(x+1,y,C.cork);}
+function torso(p){const{hx,hy,nx,ny,ch}=p;
+ PG([[nx-7,ny+2],[nx+6,ny+2],[nx+8,ny+6],[hx+8,hy-3],[hx+9+ch/2,hy+7],[hx+3,hy+9],[hx-4+ch,hy+11],[hx-10+ch,hy+9],[hx-8,hy-2],[nx-8,ny+7]],C.ct,C.ctE);
+ PG([[nx-7,ny+4],[nx-4,ny+4],[hx-5,hy-2],[hx-5+ch,hy+10],[hx-9+ch,hy+9],[hx-7,hy-2]],C.ct2);
+ L(nx-6,ny+3,nx+4,ny+3,C.ctH);
+ PG([[nx,ny+3],[nx+6,ny+3],[hx+7,hy-3],[hx+1,hy-3]],C.tn,C.tnE);
+ L(nx+2,ny+5,hx+3,hy-4,C.tnH);
+ PG([[hx,hy-1],[hx+7,hy-1],[hx+8+ch/3,hy+8],[hx+1+ch/3,hy+9]],C.tn,C.tnE);
+ L(hx+2,hy+1,hx+2+ch/3,hy+7,C.tn2);
+ L(nx-1,ny+4,hx,hy-3,C.ctH);L(hx-1,hy,hx-2+ch/2,hy+9,C.ctH);
+ L(hx+3+ch/2,hy+10,hx-8+ch,hy+10,C.ct2);
+ // belt, buckle, potions
+ PG([[hx-9,hy-5],[hx+8,hy-5],[hx+8,hy-2],[hx-9,hy-2]],C.bl,C.ctE);
+ R(hx+3,hy-5,3,3,C.mt);P(hx+4,hy-4,C.bl);P(hx+3,hy-5,'#fff4c8');
+ bottle(hx-8,hy-2,C.pr,C.prd);bottle(hx-4,hy-2,C.pg,C.pgd);bottle(hx,hy-2,C.cy,C.cy3);}
+
+function satchel(p){const x=rd(p.hx-19+p.sa),y=rd(p.hy-3+p.sy);
+ PG([[x,y],[x+9,y],[x+9,y+8],[x+8,y+9],[x+1,y+9],[x,y+8]],C.sa2,C.saE);
+ PG([[x,y],[x+9,y],[x+9,y+4],[x+5,y+5],[x,y+4]],C.sa,C.saE);
+ L(x+1,y+1,x+7,y+1,C.saH);R(x+4,y+4,2,2,C.mt);L(x+2,y+7,x+7,y+7,C.saE);}
+function strap(p){const a=[p.nx+4,p.ny+3],b=[p.hx-8,p.hy-6];
+ L(a[0],a[1],b[0],b[1],C.saE);L(a[0]+1,a[1],b[0]+1,b[1],C.saH);L(a[0]+1,a[1]+1,b[0]+1,b[1]+1,C.sa2);}
+function scabbard(p){const{hx,hy}=p;
+ S(hx+1,hy-2,hx-13,hy+9,1.6,C.ctE,1.2);L(hx,hy-2,hx-12,hy+8,'#5c3a24');
+ P(hx-14,hy+10,C.mt2);P(hx-13,hy+9,C.mt);R(hx-1,hy-2,2,2,C.mt2);}
+function hilt(p){const{hx,hy}=p;
+ L(hx+3,hy-3,hx+7,hy-7,C.glE);L(hx+4,hy-3,hx+8,hy-7,C.bl);
+ L(hx+1,hy-5,hx+4,hy-1,C.mt2);L(hx+2,hy-5,hx+4,hy-2,C.mt);P(hx+8,hy-8,C.mt);}
+function scarfTail(p){const s=p.sc,x0=p.nx-4,y0=p.ny+1,x1=x0+s[0],y1=y0+s[1],x2=x1+s[2],y2=y1+s[3];
+ S(x0,y0,x1,y1,3,C.scE,2.6);S(x1,y1,x2,y2,2.6,C.scE,1.6);
+ S(x0,y0,x1,y1,2,C.sc,1.6);S(x1,y1,x2,y2,1.6,C.sc2,.6);
+ L(x0,y0-1,x1,y1-1,C.scH);P(x2,y2,C.scE);}
+function scarfWrap(p){const x=rd(p.nx),y=rd(p.ny),f=p.sf;
+ PG([[x-6,y-2],[x+3,y-2],[x+7,y],[x+7,y+4],[x+2,y+5],[x-6,y+3]],C.sc,C.scE);
+ L(x-4,y-1,x+4,y-1,C.scH);L(x-3,y+2,x+5,y+3,C.sc2);
+ PG([[x+3,y+3],[x+7,y+3],[x+8+f,y+12],[x+5+f,y+13],[x+3,y+6]],C.sc,C.scE);
+ L(x+5,y+5,x+6+f,y+11,C.sc2);P(x+4,y+4,C.scH);}
+function head(p){const x=rd(p.hdx),y=rd(p.hdy);
+ R(x-1,y+6,4,6,C.skE);R(x,y+6,2,6,C.sk2);
+ E(x-2,y-2,9,8,C.hrE);E(x-2,y-2,8,7,C.hr2);
+ PG([[x-8,y-5],[x-13,y],[x-9,y+1],[x-12,y+5],[x-6,y+4],[x-7,y+8],[x-3,y+5]],C.hr2,C.hrE);
+ L(x-10,y+1,x-6,y-1,C.hr3);L(x-8,y+5,x-5,y+3,C.hr3);
+ E(x+2,y+2,7,8,C.skE);E(x+2,y+2,6,7,C.sk);
+ E(x-2,y+3,2,2,C.skE);E(x-2,y+3,1,1,C.sk);P(x-2,y+3,C.sk2);
+ L(x+1,y+8,x+4,y+8,C.sk2);
+ PG([[x-10,y-3],[x-8,y-8],[x-3,y-11],[x+3,y-11],[x+8,y-8],[x+10,y-3],[x+11,y+3],[x+10,y+9],[x+8,y+5],[x+7,y],[x+5,y-3],[x+2,y-2],[x-1,y-3],[x-3,y-1],[x-4,y+2],[x-6,y-1]],C.hr,C.hrE);
+ L(x-5,y-8,x+1,y-10,C.hrH);L(x+2,y-10,x+5,y-9,C.hrH);
+ L(x-7,y-4,x-5,y-1,C.hr2);L(x+1,y-7,x+4,y-3,C.hr2);L(x+8,y-2,x+9,y+6,C.hr2);L(x+6,y-6,x+9,y-3,C.hr3);
+ L(x-1,y-1,x+5,y-1,C.sk2);
+ const e=y+1;
+ R(x-1,e-1,4,1,C.lash);R(x,e,2,3,C.ey);P(x,e,C.eyH);R(x+1,e+1,1,2,C.ey2);
+ R(x+4,e-1,3,1,C.lash);R(x+4,e,2,3,C.ey);P(x+4,e,C.eyH);R(x+5,e+1,1,2,C.ey2);
+ P(x+7,y+4,C.sk2);L(x+4,y+6,x+5,y+6,C.mo);}
+
+// ---------- weapon & effects ----------
+function sword(hx,hy,a){const dx=Math.cos(a),dy=Math.sin(a),px=-dy,py=dx,len=20;
+ S(hx-dx*4,hy-dy*4,hx+dx,hy+dy,1,C.glE);L(hx-dx*4,hy-dy*4,hx+dx,hy+dy,C.bl);P(hx-dx*5,hy-dy*5,C.mt);
+ const gx=hx+dx*2.5,gy=hy+dy*2.5;
+ S(gx+px*3,gy+py*3,gx-px*3,gy-py*3,1,C.ctE);L(gx+px*3,gy+py*3,gx-px*3,gy-py*3,C.mt);P(gx-px*2,gy-py*2,'#fff4c8');
+ const bx=hx+dx*4,by=hy+dy*4,tx=hx+dx*len,ty=hy+dy*len;
+ S(bx,by,tx,ty,1.2,C.stE,.6);L(bx,by,tx-dx,ty-dy,C.st2);L(bx-px,by-py,tx-dx*3-px,ty-dy*3-py,C.st);P(tx,ty,C.st);}
+function arc(cx,cy,r,a0,a1,w,cols){for(let a=a0;a<=a1;a+=.015){const t=(a-a0)/(a1-a0),ww=Math.max(1,rd(w*t));
+ for(let k=0;k<ww;k++)P(cx+Math.cos(a)*(r-k),cy+Math.sin(a)*(r-k),cols[Math.min(k,cols.length-1)]);}}
+const SLASH=['#ffffff','#d6f4ff','#8fd4ff','#5aa8e8'],MAGIC=[C.cyW,C.cy,C.cy2];
+function star(x,y,c){P(x,y,C.cyW);P(x-1,y,c);P(x+1,y,c);P(x,y-1,c);P(x,y+1,c);}
+function vial(x,y,g){x=rd(x);y=rd(y);
+ R(x-2,y-1,5,6,C.cy3);R(x-1,y-3,3,2,C.cy3);R(x-1,y,3,4,C.cy);P(x,y-2,C.cy2);P(x,y-3,C.cork);
+ P(x-1,y,C.cyW);P(x-1,y+1,C.cyW);R(x,y+3,2,1,C.cy2);
+ if(g){P(x-4,y,C.cy);P(x+4,y+2,C.cy2);P(x+2,y-5,C.cyW);P(x-3,y+5,C.cy2);}}
+function burst(cx,cy,s){
+ if(s===1){D(cx,cy,4,C.cy3);D(cx,cy,3,C.cy2);D(cx,cy,2,C.cy);D(cx,cy,1,C.cyW);
+  for(let i=0;i<8;i++){const a=i*Math.PI/4+.3,c=Math.cos(a),n=Math.sin(a),o=i%2?7:9;L(cx+c*5,cy+n*5,cx+c*o,cy+n*o,i%2?C.cy2:C.cy);}
+  P(cx+6,cy-7,C.cyW);P(cx-7,cy+4,C.cyW);P(cx+3,cy+9,C.cyW);P(cx-4,cy-8,C.cy);}
+ else{for(let i=0;i<10;i++){const a=i*Math.PI/5+.15;P(cx+Math.cos(a)*10,cy+Math.sin(a)*10,i%2?C.cy2:C.cy);}
+  star(cx+6,cy-7,C.cy);star(cx-7,cy+2,C.cy2);star(cx+4,cy+7,C.cy);D(cx,cy,1,C.cy2);P(cx,cy,C.cy);
+  P(cx-2,cy+12,C.cy2);P(cx+1,cy+14,C.cy);}}
+// ---------- full pose ----------
+function drawPose(ctx,q){X=ctx;ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,W,H);
+ const hx=38+q.b[0],hy=62+q.b[1],nx=hx+2+q.t,ny=hy-26,hd=q.hd||[0,0];
+ const p={hx,hy,nx,ny,ch:q.ch||0,sa:q.sa||0,sy:q.sy||0,sc:q.sc,sf:q.sf||0,hdx:nx+1+hd[0],hdy:ny-13+hd[1]};
+ const sfx=nx-5,sfy=ny+5,snx=nx+3,sny=ny+5;
+ if(q.arc)arc(snx,sny,q.arc[0],q.arc[1],q.arc[2],q.arc[3],q.arcC||SLASH);
+ const near=()=>{const h=arm(snx,sny,q.an,true);
+  if(q.sw!==undefined){sword(h[0],h[1],q.sw);hand(h[0],h[1],h[2],h[3]);}
+  if(q.vl)vial(h[0]+h[2],h[1]-4,q.vl>1);};
+ scarfTail(p);satchel(p);
+ arm(sfx,sfy,q.af,false);
+ if(q.fg)star(sfx+q.af[2]+2,sfy+q.af[3]-1,C.cy);
+ leg(hx-3,hy,q.lf,false);scabbard(p);
+ if(q.nb)near();
+ leg(hx+3,hy,q.ln,true);
+ torso(p);strap(p);if(q.sw===undefined)hilt(p);
+ head(p);scarfWrap(p);
+ if(!q.nb)near();
+ if(q.fx)q.fx();}
+
+// ---------- poses (limb arrays: [elbow/knee dx,dy, hand/ankle dx,dy, toeDown]) ----------
+const IDLE=[
+ {b:[0,0],t:0,lf:[-1,21,-2,42,0],ln:[1,21,3,42,0],af:[-1,10,-2,20],an:[2,10,3,19],sc:[-4,5,-2,6]},
+ {b:[0,1],t:0,lf:[-1,20,-2,41,0],ln:[1,20,3,41,0],af:[-1,10,-2,19],an:[2,10,3,18],sc:[-4,5,-2,7],sy:1}];
+const RB=[-6,7,-11,12],RBM=[-4,9,-7,15],RP=[0,10,3,16],RPB=[-1,10,-2,18],RF=[4,8,10,4],RFM=[2,9,8,9];
+const RUN=[
+ {b:[2,0],t:3,hd:[1,0],ln:[6,18,11,41,0],lf:[-4,19,-12,36,1],an:RB,af:RF,sc:[-7,1,-6,-1],ch:-2,sa:-1,sy:0,sf:-1},
+ {b:[2,2],t:3,hd:[1,0],ln:[5,18,3,40,0],lf:[-6,16,-14,28,1],an:RBM,af:RFM,sc:[-7,2,-6,1],ch:-3,sa:-2,sy:-1,sf:-2},
+ {b:[2,-1],t:3,hd:[1,0],ln:[2,21,-2,43,0],lf:[5,15,-1,30,1],an:RP,af:RPB,sc:[-7,0,-7,1],ch:-1,sa:0,sy:1,sf:-1},
+ {b:[2,0],t:3,hd:[1,0],lf:[6,18,11,41,0],ln:[-4,19,-12,36,1],an:RF,af:RB,sc:[-7,1,-6,-2],ch:-2,sa:-1,sy:0,sf:-1},
+ {b:[2,2],t:3,hd:[1,0],lf:[5,18,3,40,0],ln:[-6,16,-14,28,1],an:RFM,af:RBM,sc:[-7,2,-6,0],ch:-3,sa:-2,sy:-1,sf:-2},
+ {b:[2,-1],t:3,hd:[1,0],lf:[2,21,-2,43,0],ln:[5,15,-1,30,1],an:RPB,af:RP,sc:[-7,0,-7,2],ch:-1,sa:0,sy:1,sf:-1}];
+const AA=[
+ {b:[-2,2],t:-2,hd:[-1,1],lf:[-2,19,-6,40,0],ln:[3,18,7,40,0],af:[4,7,8,12],an:[-5,5,-7,-3],sw:-2.2,nb:1,ch:1,sa:1,sc:[-5,4,-3,5]},
+ {b:[-3,3],t:-3,hd:[-1,1],lf:[-3,18,-7,39,0],ln:[3,17,8,39,0],af:[5,6,10,9],an:[-6,3,-9,-6],sw:-1.95,nb:1,ch:2,sa:2,sy:-1,sc:[-4,3,-2,4]},
+ {b:[1,2],t:3,hd:[1,1],lf:[-4,19,-12,38,1],ln:[6,16,11,40,0],af:[-6,6,-11,10],an:[5,4,10,7],sw:.5,arc:[29,-2.0,.5,4],ch:-3,sa:-3,sy:1,sc:[-7,-1,-6,-2],sf:-2},
+ {b:[2,3],t:3,hd:[1,1],lf:[-5,18,-12,37,1],ln:[6,16,11,39,0],af:[-6,7,-10,12],an:[4,7,8,12],sw:1.1,arc:[28,-.4,1.2,3],ch:-2,sa:-4,sy:2,sc:[-7,1,-6,1],sf:-1},
+ {b:[1,2],t:1,lf:[-3,19,-8,40,0],ln:[4,18,8,40,0],af:[-3,9,-5,17],an:[3,8,6,14],sw:1.35,ch:-1,sa:-2,sy:1,sc:[-6,2,-4,3]},
+ {b:[0,1],t:0,lf:[-2,20,-4,41,0],ln:[2,20,5,41,0],af:[-1,10,-2,19],an:[2,9,5,16],sw:1.0,sa:-1,sc:[-5,4,-3,6]}];
+const AB=[
+ {b:[0,1],t:0,lf:[-1,20,-2,41,0],ln:[1,20,3,41,0],af:[-1,10,-2,19],an:[3,9,4,15],vl:2,sc:[-4,5,-2,7]},
+ {b:[-2,2],t:-2,hd:[-1,0],lf:[-2,19,-6,40,0],ln:[3,18,8,40,0],af:[5,6,11,4],fg:1,an:[-5,4,-9,-4],nb:1,vl:2,ch:1,sa:1,sc:[-5,4,-3,5]},
+ {b:[1,2],t:3,hd:[1,0],lf:[-3,19,-10,39,1],ln:[5,17,10,40,0],af:[-4,7,-8,12],an:[3,-3,9,-7],vl:2,arc:[14,-2.7,-1.3,2],arcC:MAGIC,ch:-2,sa:-2,sc:[-7,0,-6,-1],sf:-1},
+ {b:[2,2],t:4,hd:[1,1],lf:[-4,19,-11,38,1],ln:[6,16,11,40,0],af:[-5,7,-9,13],an:[6,3,12,2],ch:-3,sa:-3,sy:1,sc:[-7,-1,-6,-2],sf:-2,
+  fx:()=>{P(64,43,C.cy2);P(66,42,C.cy);vial(70,38,true);}},
+ {b:[2,2],t:3,hd:[1,1],lf:[-4,19,-11,38,1],ln:[6,16,11,40,0],af:[-4,8,-7,15],an:[6,6,11,10],ch:-2,sa:-4,sy:2,sc:[-7,1,-6,1],sf:-1,
+  fx:()=>burst(68,44,1)},
+ {b:[1,1],t:1,lf:[-2,20,-5,41,0],ln:[3,19,7,41,0],af:[-2,9,-3,18],an:[3,9,5,16],ch:-1,sa:-2,sy:1,sc:[-6,3,-4,4],fx:()=>burst(68,44,2)}];
+
+// ---------- page wiring ----------
+const SETS=[['idle',IDLE,[620,620]],['run',RUN,[95,95,95,95,95,95]],
+ ['attack-a',AA,[150,170,70,90,120,260]],['attack-b',AB,[150,210,80,100,140,300]]];
+const FR={};
+for(const[k,list]of SETS)FR[k]=list.map(q=>{const c=document.createElement('canvas');c.width=W;c.height=H;drawPose(c.getContext('2d'),q);return c;});
+function blit(cv,src){const g=cv.getContext('2d');g.imageSmoothingEnabled=false;g.clearRect(0,0,W,H);g.drawImage(src,0,0);}
+const sheet=document.getElementById('contact-sheet');
+for(const[k]of SETS){const row=document.createElement('div'),h=document.createElement('h3'),strip=document.createElement('div');
+ h.textContent=k+' - '+FR[k].length+' frames';strip.className='strip';
+ FR[k].forEach((src,i)=>{const f=document.createElement('figure'),st=document.createElement('div'),c=document.createElement('canvas'),cap=document.createElement('figcaption');
+  st.className='stage';c.width=W;c.height=H;c.dataset.contactFrame=k+':'+i;c.setAttribute('aria-label',k+' frame '+i);
+  blit(c,src);cap.textContent=k+':'+i;st.appendChild(c);f.append(st,cap);strip.appendChild(f);});
+ row.append(h,strip);sheet.appendChild(row);}
+blit(document.getElementById('native-size-example'),FR.idle[0]);
+blit(document.getElementById('equal-display-size-example'),FR.idle[0]);
+const live=SETS.map(([k,,ms])=>({k,ms,cv:document.querySelector('[data-animation-preview="'+k+'"]'),i:0,t:0,loop:k==='idle'||k==='run'}));
+live.forEach(o=>blit(o.cv,FR[o.k][0]));
+let last=performance.now();
+function tick(now){const dt=Math.min(120,now-last);last=now;
+ for(const o of live){o.t+=dt;const n=FR[o.k].length,hold=(!o.loop&&o.i===n-1)?520:0;
+  if(o.t>=o.ms[o.i]+hold){o.t=0;o.i=(o.i+1)%n;blit(o.cv,FR[o.k][o.i]);}}
+ requestAnimationFrame(tick);}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

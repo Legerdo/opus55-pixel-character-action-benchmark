@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alchemist Adventurer - 48x64 Pixel Sprite</title>
+<link rel="icon" href="data:,">
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:#1b1f2c;color:#e6e4ee;font:14px/1.45 system-ui,"Segoe UI",sans-serif}
+h1{font-size:18px;margin:0 0 4px}
+h2{font-size:15px;margin:22px 0 8px;color:#cfd6ff}
+p.note{margin:0 0 12px;color:#9aa3bd;font-size:12px}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.card{background:#262c3d;border:1px solid #394160;border-radius:6px;padding:6px}
+.card label{display:block;font-size:11px;color:#a9b1c9;margin-bottom:4px;font-family:ui-monospace,Consolas,monospace}
+.chk{background-color:#4a5270;background-image:linear-gradient(45deg,#3f4662 25%,transparent 25%,transparent 75%,#3f4662 75%),linear-gradient(45deg,#3f4662 25%,transparent 25%,transparent 75%,#3f4662 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.pv canvas{width:144px;height:192px}
+.cs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.cs .grp{grid-column:1/-1;font-size:12px;color:#cfd6ff;margin-top:4px}
+.cs canvas{width:96px;height:128px}
+#native-size-example{width:48px;height:64px}
+#equal-display-size-example{width:288px;height:384px}
+@media (max-width:520px){
+ body{padding:10px}
+ .pv canvas{width:96px;height:128px}
+ .cs{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}
+ .cs canvas{width:72px;height:96px}
+}
+</style>
+</head>
+<body>
+<h1>Alchemist Adventurer &middot; 48&times;64 sprite</h1>
+<p class="note">20 frames. Every canvas is 48&times;64 logical px with a transparent background. Previews 3&times;, contact sheet 2&times;, nearest-neighbor scaling.</p>
+<h2>Live previews</h2>
+<div id="animation-preview" class="row"></div>
+<h2>Contact sheet (Idle 2 &middot; Run 6 &middot; Attack A 6 &middot; Attack B 6)</h2>
+<div id="contact-sheet" class="cs"></div>
+<h2>Size samples</h2>
+<div class="row">
+<div class="card"><label>native 1&times; (48&times;64)</label><canvas id="native-size-example" class="chk" width="48" height="64"></canvas></div>
+<div class="card"><label>equal height 384px (6&times;)</label><canvas id="equal-display-size-example" class="chk" width="48" height="64"></canvas></div>
+</div>
+<script>
+'use strict';
+
+const W=48,H=64;
+const C={o:'#221b2d',sk:'#f2c49e',skS:'#c98a6c',ha:'#e4e9f2',haS:'#a4aec6',haD:'#6d7594',haW:'#ffffff',
+ey:'#f7a823',eyD:'#3a2233',sc:'#d73a3c',scS:'#8e1f33',scH:'#ff7d68',tu:'#2c3663',tuS:'#1c2346',
+co:'#8e5b34',coS:'#603b22',coH:'#bd8850',gl:'#3a2a2b',pa:'#413b55',paS:'#2d283d',paH:'#5a5474',
+bo:'#352839',boS:'#231a28',boH:'#5d4c61',be:'#4d3021',bu:'#e2bb5e',sa:'#77522f',saS:'#4f341e',
+me:'#e1e9f2',meS:'#8b99ae',cy:'#5cf2ff',cyD:'#1aa3cc',cyW:'#effffe',arc:'#9fe6ff',rd:'#e4524b',gr:'#76d65a'};
+let B;
+// integer pixel buffer helpers
+function P(x,y,c){x=Math.round(x);y=Math.round(y);if(x>=0&&y>=0&&x<W&&y<H)B[y*W+x]=c;}
+function R(x,y,w,h,c){for(let j=0;j<h;j++)for(let i=0;i<w;i++)P(x+i,y+j,c);}
+function L(x0,y0,x1,y1,c,w){x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);w=w||1;const o=w>>1;
+ let dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,e=dx+dy;
+ for(;;){R(x0-o,y0-o,w,w,c);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx;}if(e2<=dx){e+=dx;y0+=sy;}}}
+// angle convention: 0 = down, 90 = forward (right), 180 = up, -90 = back
+function pt(p,a,l){const r=a*Math.PI/180;return [Math.round(p[0]+Math.sin(r)*l),Math.round(p[1]+Math.cos(r)*l)];}
+function outline(){const o=B.slice();for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(B[y*W+x])continue;
+ if((x>0&&B[y*W+x-1])||(x<W-1&&B[y*W+x+1])||(y>0&&B[(y-1)*W+x])||(y<H-1&&B[(y+1)*W+x]))o[y*W+x]=C.o;}B=o;}
+
+function leg(h,g,back){
+ const k=pt(h,g.t,9),a=pt(k,g.s,10),m=[Math.round(k[0]+(a[0]-k[0])*.4),Math.round(k[1]+(a[1]-k[1])*.4)];
+ const pc=back?C.paS:C.pa,bc=back?C.boS:C.bo;
+ if(!back){L(h[0],h[1],k[0],k[1],C.o,6);L(k[0],k[1],a[0],a[1],C.o,6);R(a[0]-3,a[1]-1,8,4,C.o);}
+ L(h[0],h[1],k[0],k[1],pc,4);L(k[0],k[1],m[0],m[1],pc,4);L(m[0],m[1],a[0],a[1],bc,4);
+ R(a[0]-2,a[1],6,2,bc);
+ if(!back){P(a[0]+2,a[1],C.boH);P(a[0]+3,a[1],C.boH);L(m[0]-1,m[1],m[0]+1,m[1],C.boH,1);P(k[0],k[1]-1,C.paH);}
+}
+function vial(x,y){P(x,y-4,C.coH);P(x,y-3,C.me);R(x-1,y-2,3,3,C.cy);R(x-1,y,3,1,C.cyD);P(x-1,y-2,C.cyW);}
+function vialSide(x,y){P(x+3,y,C.coH);P(x+2,y,C.me);R(x-1,y-1,3,3,C.cy);R(x-1,y+1,3,1,C.cyD);P(x-1,y-1,C.cyW);}
+function sword(h,a){
+ const t=pt(h,a,12),g=pt(h,a,2);
+ L(g[0],g[1],t[0],t[1],C.meS,2);L(g[0],g[1],t[0],t[1],C.me,1);
+ const r=pt(h,a,6);P(r[0],r[1],C.cy);
+ const q1=pt(g,a+90,2),q2=pt(g,a-90,2);L(q1[0],q1[1],q2[0],q2[1],C.bu,1);
+ const p=pt(h,a+180,2);L(h[0],h[1],p[0],p[1],C.be,1);P(p[0],p[1],C.bu);
+}
+function arm(s,g,back,hold){
+ const e=pt(s,g.u,6),h=pt(e,g.f,6),w=pt(e,g.f,3),f=pt(e,g.f,8);
+ if(!back){L(s[0],s[1],e[0],e[1],C.o,5);L(e[0],e[1],h[0],h[1],C.o,5);R(h[0]-2,h[1]-2,5,5,C.o);}
+ const cc=back?C.coS:C.co;
+ L(s[0],s[1],e[0],e[1],cc,3);L(e[0],e[1],w[0],w[1],cc,3);L(w[0],w[1],h[0],h[1],C.gl,3);
+ if(typeof hold==='number')sword(h,hold);
+ if(hold==='vial')vial(h[0],h[1]-2);
+ R(h[0]-1,h[1]-1,3,3,C.gl);P(f[0],f[1],back?C.skS:C.sk);
+ if(!back)P(s[0],s[1]-1,C.coH);
+ return h;
+}
+
+function bottle(x,y,c){P(x,y,C.coH);R(x-1,y+1,2,2,c);P(x-1,y+1,C.cyW);}
+function torso(hx,hy,ln,br,hem){
+ const top=hy-18+br;
+ for(let y=top;y<=hy+1;y++){
+  const cx=Math.round(hx+ln*(hy-y)/(hy-top));
+  let l=cx-5,r=cx+5;
+  if(y===top){l++;r--;}
+  if(y>=hy)l-=hem;
+  R(l,y,r-l+1,1,y===hy+1?C.coS:C.co);P(l,y,C.coS);P(l+1,y,C.coS);
+  if(y>top){R(cx+1,y,3,1,C.tu);P(cx+1,y,C.tuS);P(cx+4,y,C.coH);}
+ }
+ R(hx-5,hy-5,11,2,C.be);R(hx+1,hy-5,2,2,C.bu);
+ bottle(hx-4,hy-3,C.rd);bottle(hx-1,hy-3,C.gr);bottle(hx+4,hy-3,C.cy);
+ return top;
+}
+function satchel(hx,hy,top,ln,s){
+ const x=hx-10+s,y=hy-6;
+ L(hx+ln+3,top+1,hx-5,hy-6,C.be,1);
+ R(x,y,6,6,C.sa);R(x,y,6,2,C.saS);R(x,y+5,6,1,C.saS);P(x+3,y+2,C.bu);P(x+1,y+3,C.coH);
+}
+function sheath(hx,hy,full){
+ const s=[hx+3,hy-4],e=pt(s,-58,11);
+ L(s[0],s[1],e[0],e[1],C.be,2);P(e[0],e[1],C.meS);
+ if(full){const p=pt(s,122,3),q1=pt(s,212,2),q2=pt(s,32,2);
+  L(s[0],s[1],p[0],p[1],C.gl,2);L(q1[0],q1[1],q2[0],q2[1],C.bu,1);P(p[0],p[1],C.bu);}
+}
+function head(hc,y0){
+ R(hc-1,y0+11,3,3,C.skS);
+ R(hc-2,y0+3,8,8,C.sk);R(hc-1,y0+11,5,1,C.sk);R(hc-2,y0+9,2,2,C.skS);P(hc+3,y0+10,C.skS);
+ // short silver hair: crown, back mass, nape
+ R(hc-4,y0,7,1,C.ha);R(hc-5,y0+1,10,4,C.ha);R(hc-6,y0+2,4,8,C.ha);
+ P(hc-7,y0+3,C.ha);P(hc-7,y0+4,C.ha);P(hc-3,y0-1,C.ha);P(hc,y0-1,C.ha);
+ R(hc-6,y0+7,3,3,C.haS);P(hc-7,y0+6,C.haS);P(hc-6,y0+10,C.haS);P(hc-5,y0+10,C.haS);P(hc-4,y0+9,C.haD);
+ R(hc-3,y0+1,3,1,C.haW);P(hc+1,y0+2,C.haW);R(hc-5,y0+4,2,1,C.haS);
+ // ear
+ R(hc-2,y0+6,2,3,C.sk);P(hc-2,y0+7,C.skS);
+ // short fringe + long asymmetric bang swept to the front side
+ R(hc-1,y0+5,3,1,C.ha);
+ L(hc+3,y0+4,hc+6,y0+9,C.ha,2);P(hc+6,y0+10,C.haS);L(hc+4,y0+6,hc+6,y0+9,C.haS,1);
+ // amber eye
+ P(hc+1,y0+6,C.eyD);P(hc+2,y0+6,C.eyD);P(hc+1,y0+7,C.ey);P(hc+2,y0+7,C.ey);
+}
+function scarfTail(hc,y0,sc){
+ const s=[hc-3,y0+13],e=[s[0]+sc[0],s[1]+sc[1]],dx=e[0]-s[0],dy=e[1]-s[1],len=Math.hypot(dx,dy)||1;
+ const m=[Math.round(s[0]+dx/2-dy/len*sc[2]),Math.round(s[1]+dy/2+dx/len*sc[2])];
+ L(s[0],s[1],m[0],m[1],C.sc,3);L(m[0],m[1],e[0],e[1],C.scS,2);L(m[0],m[1],e[0],e[1],C.sc,1);
+}
+function scarfWrap(hc,y0){
+ R(hc-3,y0+12,8,1,C.sc);R(hc-4,y0+13,9,1,C.sc);R(hc-4,y0+14,8,1,C.scS);
+ P(hc+1,y0+12,C.scH);P(hc+2,y0+12,C.scH);P(hc+3,y0+13,C.scH);
+ R(hc+2,y0+15,2,3,C.sc);P(hc+2,y0+17,C.scS);
+}
+
+const FX={
+ arc(f,c){const n=Math.abs(f.a1-f.a0);for(let i=0;i<=n;i+=2){const a=f.a0+(f.a1-f.a0)*i/n,t=i/n;
+  const p1=pt(c.sF,a,f.r);P(p1[0],p1[1],t>.5?C.cyW:C.arc);
+  if(t>.35){const p2=pt(c.sF,a,f.r-1);P(p2[0],p2[1],t>.7?C.cyW:C.arc);}
+  if(f.thick&&t>.7){const p3=pt(c.sF,a,f.r-2);P(p3[0],p3[1],C.arc);}}},
+ spark(f,c){const x=c.h[0]+f.dx,y=c.h[1]+f.dy;P(x,y,C.cyW);if(f.big){P(x-1,y,C.cy);P(x+1,y,C.cy);P(x,y-1,C.cy);P(x,y+1,C.cy);}},
+ trail(f,c){for(let i=3;i<=f.len;i+=2){P(c.px-i,c.py+Math.round(i*(f.dy||0)),i<f.len/2?C.cy:C.cyD);}},
+ burst(f){const c=[f.x,f.y];
+  if(!f.fade){for(let a=0;a<360;a+=8){const q=pt(c,a,f.r);P(q[0],q[1],C.cy);}
+   for(let a=45;a<360;a+=90){const q=pt(c,a,f.r+1);P(q[0],q[1],C.cyD);}
+   for(let a=0;a<360;a+=90){const q=pt(c,a,f.r+2);P(q[0],q[1],C.cyW);}
+   R(f.x-1,f.y-1,3,3,C.cy);P(f.x,f.y,C.cyW);P(f.x-1,f.y,C.cyW);P(f.x,f.y-1,C.cyW);}
+  else{for(let a=20;a<360;a+=60){const q=pt(c,a,f.r);P(q[0],q[1],C.cyD);}
+   P(f.x,f.y,C.cy);P(f.x+1,f.y+3,C.cy);P(f.x-2,f.y+5,C.cyD);P(f.x+2,f.y-4,C.cyW);}}
+};
+function build(p){
+ B=new Array(W*H).fill(null);
+ const drop=q=>pt(pt([0,0],q.t,9),q.s,10)[1];
+ const hy=58-Math.max(drop(p.lb),drop(p.lf))-(p.air||0),hx=p.x,ln=p.ln||0,br=p.br||0;
+ const top=hy-18+br,cx=hx+ln,hc=cx+1,y0=top-14,sB=[cx-4,top+3],sF=[cx+4,top+3];
+ scarfTail(hc,y0,p.sc);
+ arm(sB,p.ab,true,null);
+ leg([hx-2,hy],p.lb,true);
+ leg([hx+1,hy],p.lf,false);
+ torso(hx,hy,ln,br,p.hem||0);
+ satchel(hx,hy,top,ln,p.sat||0);
+ sheath(hx,hy,!p.drawn);
+ head(hc,y0);
+ scarfWrap(hc,y0);
+ const h=arm(sF,p.af,false,p.hold);
+ let px=0,py=0;
+ if(p.proj){px=h[0]+p.proj[0];py=h[1]+p.proj[1];if(p.side)vialSide(px,py);else vial(px,py);}
+ outline();
+ const ctx={h,sF,px,py};
+ (p.fx||[]).forEach(f=>FX[f.k](f,ctx));
+ return B;
+}
+const Q=(t,s)=>({t,s}),A=(u,f)=>({u,f});
+const IDLE=[
+ {x:21,lb:Q(-5,-3),lf:Q(7,3),ab:A(-8,-3),af:A(12,30),hold:'vial',sc:[-6,9,1],fx:[{k:'spark',dx:2,dy:-6}]},
+ {x:21,br:1,lb:Q(-5,-3),lf:Q(7,3),ab:A(-8,-3),af:A(12,27),hold:'vial',sc:[-6,10,0],fx:[{k:'spark',dx:-2,dy:-7}]}
+];
+const RUN=[
+ {x:20,ln:2,lf:Q(32,8),lb:Q(-28,-70),af:A(-40,-15),ab:A(45,100),sc:[-11,1,-2],hem:1,sat:1},
+ {x:20,ln:2,lf:Q(6,-6),lb:Q(12,-85),af:A(-15,35),ab:A(20,80),sc:[-11,3,1],hem:1,sat:1},
+ {x:20,ln:2,air:2,lf:Q(-28,-45),lb:Q(48,15),af:A(30,95),ab:A(-35,-5),sc:[-12,0,2],hem:2,sat:0},
+ {x:20,ln:2,lf:Q(-28,-70),lb:Q(32,8),af:A(45,100),ab:A(-40,-15),sc:[-11,1,-1],hem:1,sat:-1},
+ {x:20,ln:2,lf:Q(12,-85),lb:Q(6,-6),af:A(20,80),ab:A(-15,35),sc:[-11,3,2],hem:1,sat:-1},
+ {x:20,ln:2,air:2,lf:Q(48,15),lb:Q(-28,-45),af:A(-35,-5),ab:A(30,95),sc:[-12,0,-2],hem:2,sat:0}
+];
+
+const ATKA=[
+ {x:15,drawn:true,ln:0,lf:Q(22,5),lb:Q(-20,-10),ab:A(-20,-10),af:A(30,75),hold:115,sc:[-7,8,1]},
+ {x:15,drawn:true,ln:-2,lf:Q(30,15),lb:Q(-15,-8),ab:A(40,85),af:A(-95,-60),hold:-150,sc:[-5,9,0],hem:1},
+ {x:15,drawn:true,ln:3,lf:Q(40,10),lb:Q(-38,-28),ab:A(-50,-30),af:A(95,90),hold:92,sc:[-12,2,1],hem:2,
+  fx:[{k:'arc',a0:190,a1:100,r:21,thick:true}]},
+ {x:15,drawn:true,ln:2,lf:Q(40,10),lb:Q(-38,-28),ab:A(-45,-25),af:A(60,25),hold:30,sc:[-11,4,-1],hem:2,
+  fx:[{k:'arc',a0:98,a1:45,r:19}]},
+ {x:15,drawn:true,ln:1,lf:Q(32,8),lb:Q(-30,-20),ab:A(-25,-10),af:A(40,70),hold:95,sc:[-9,6,1],hem:1},
+ {x:15,drawn:true,ln:1,lf:Q(26,6),lb:Q(-24,-14),ab:A(-15,-5),af:A(25,60),hold:125,sc:[-7,8,0]}
+];
+const ATKB=[
+ {x:16,ln:0,lf:Q(18,4),lb:Q(-18,-10),ab:A(-12,-5),af:A(15,-25),hold:'vial',sc:[-7,8,1]},
+ {x:16,ln:-2,lf:Q(28,12),lb:Q(-18,-12),ab:A(-30,-10),af:A(140,160),hold:'vial',sc:[-8,7,1],hem:1,
+  fx:[{k:'spark',dx:3,dy:-7,big:true},{k:'spark',dx:-2,dy:-8}]},
+ {x:16,ln:3,lf:Q(36,10),lb:Q(-32,-24),ab:A(-45,-25),af:A(100,85),proj:[5,-3],sc:[-12,2,1],hem:2,
+  fx:[{k:'trail',len:5,dy:.3}]},
+ {x:16,ln:2,lf:Q(36,10),lb:Q(-32,-24),ab:A(-40,-20),af:A(85,70),proj:[9,-4],side:true,sc:[-11,4,-1],hem:2,
+  fx:[{k:'trail',len:9,dy:.2}]},
+ {x:16,ln:2,lf:Q(34,9),lb:Q(-30,-20),ab:A(-25,-10),af:A(60,45),sc:[-9,6,1],hem:1,
+  fx:[{k:'burst',x:41,y:26,r:4}]},
+ {x:16,ln:1,lf:Q(24,6),lb:Q(-22,-12),ab:A(-15,-5),af:A(30,30),sc:[-7,8,0],
+  fx:[{k:'burst',x:41,y:26,r:6,fade:true}]}
+];
+function toImg(buf){const d=new ImageData(W,H);for(let i=0;i<W*H;i++){const c=buf[i];if(!c)continue;
+ const v=parseInt(c.slice(1),16);d.data[i*4]=v>>16;d.data[i*4+1]=(v>>8)&255;d.data[i*4+2]=v&255;d.data[i*4+3]=255;}return d;}
+function mk(){const c=document.createElement('canvas');c.width=W;c.height=H;return c;}
+function draw(cv,img){const g=cv.getContext('2d');g.imageSmoothingEnabled=false;g.clearRect(0,0,W,H);g.putImageData(img,0,0);}
+const ANIMS=[
+ {n:'idle',label:'Idle',poses:IDLE,fps:2.5,loop:true},
+ {n:'run',label:'Run',poses:RUN,fps:10,loop:true},
+ {n:'attack-a',label:'Attack A: slash',poses:ATKA,fps:12,loop:false},
+ {n:'attack-b',label:'Attack B: vial throw',poses:ATKB,fps:10,loop:false}
+];
+ANIMS.forEach(a=>{a.imgs=a.poses.map(p=>toImg(build(p)));});
+const pvRoot=document.getElementById('animation-preview'),cs=document.getElementById('contact-sheet');
+ANIMS.forEach(a=>{
+ const card=document.createElement('div');card.className='card pv';
+ const lb=document.createElement('label');lb.textContent=a.label+' ('+a.imgs.length+'f)';
+ const cv=mk();cv.id=a.n+'-preview';cv.className='chk';cv.dataset.animationPreview=a.n;
+ cv.setAttribute('role','img');cv.setAttribute('aria-label',a.label+' animation preview');
+ card.append(lb,cv);pvRoot.append(card);a.cv=cv;a.cur=0;draw(cv,a.imgs[0]);
+ const g=document.createElement('div');g.className='grp';g.textContent=a.label+' ('+a.imgs.length+' frames)';cs.append(g);
+ a.imgs.forEach((im,i)=>{const c2=document.createElement('div');c2.className='card';
+  const l2=document.createElement('label');l2.textContent=a.n+':'+i;
+  const cv2=mk();cv2.className='chk';cv2.dataset.contactFrame=a.n+':'+i;cv2.setAttribute('role','img');
+  cv2.setAttribute('aria-label',a.label+' frame '+(i+1));draw(cv2,im);c2.append(l2,cv2);cs.append(c2);});
+});
+draw(document.getElementById('native-size-example'),ANIMS[0].imgs[0]);
+draw(document.getElementById('equal-display-size-example'),ANIMS[0].imgs[0]);
+const t0=performance.now();
+function tick(t){ANIMS.forEach(a=>{const n=a.imgs.length,step=Math.max(0,Math.floor((t-t0)/1000*a.fps));
+ const i=a.loop?step%n:Math.min(step%(n+6),n-1);if(i!==a.cur){a.cur=i;draw(a.cv,a.imgs[i]);}});requestAnimationFrame(tick);}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

@@ -8,6 +8,11 @@ Side-by-side comparison of one young fantasy alchemist adventurer rendered as a 
 - Exact model ID: `claude-opus-5.5`
 - Reasoning effort: `high`
 
+## Live comparison
+
+- GitHub Pages: [Open the live comparison](https://legerdo.github.io/opus55-pixel-character-action-benchmark/).
+- Public repository: [Source, README, and exact prompts](https://github.com/Legerdo/opus55-pixel-character-action-benchmark).
+
 ## Variants
 
 | Variant | Logical frame size | Intended tier |
